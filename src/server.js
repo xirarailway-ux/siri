@@ -3,7 +3,7 @@ const session = require('express-session')
 const path = require('path')
 const bcrypt = require('bcryptjs')
 const bodyParser = require('body-parser')
-const { port, adminPassword, botToken } = require('./config')
+const { port, adminPassword, botToken, baseUrl } = require('./config')
 const db = require('./db')
 const eleven = require('./elevenlabs')
 const multer = require('multer')
@@ -224,7 +224,8 @@ function startServer() {
     for (let i = 0; i < 5; i++) {
       try {
         await tryListen(p)
-        console.log(`Admin panel on http://localhost:${p}`)
+        const shown = baseUrl ? baseUrl : `http://localhost:${p}`
+        console.log(`Admin panel on ${shown}`)
         break
       } catch (e) {
         if (e.code === 'EADDRINUSE') { p++; continue }

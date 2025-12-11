@@ -30,9 +30,14 @@ bot.hears('Profile', async ctx => {
 bot.hears('Models', async ctx => {
   let vlist = await db.listVoices(true)
   if (vlist.length === 0) {
-    const apiVoices = await eleven.listVoices()
-    await db.setVoices(apiVoices)
-    vlist = await db.listVoices(true)
+    try {
+      const apiVoices = await eleven.listVoices()
+      await db.setVoices(apiVoices)
+      vlist = await db.listVoices(true)
+    } catch (e) {
+      await ctx.reply('Models unavailable. Set the ElevenLabs API key in Admin > Settings and press Sync.', keyboard())
+      return
+    }
   }
   const rows = []
   vlist.slice(0, 24).forEach(v => rows.push([Markup.button.callback(v.name, `set_voice:${v.voice_id}`)]))
