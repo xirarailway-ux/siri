@@ -15,7 +15,8 @@ function keyboard() {
 bot.start(async ctx => {
   const u = ctx.from
   await db.upsertUser({ tg_id: String(u.id), username: u.username || '', first_name: u.first_name || '', last_name: u.last_name || '' })
-  await ctx.reply('Welcome to ElevenLabs TTS Bot', keyboard())
+  const msg = await db.getSetting('welcome_message') || 'Welcome to ElevenLabs TTS Bot'
+  await ctx.reply(msg, keyboard())
 })
 bot.hears('Contact', async ctx => {
   const instr = await db.getSetting('contact') || 'Contact support via admin.'
