@@ -156,6 +156,7 @@ bot.on('text', async ctx => {
   const text = ctx.message.text.trim()
   if (!text) return
   if (['Plans','Models','Profile','Contact'].includes(text)) return
+  if (text.length > 200) { await ctx.reply('Text too long. Max 200 characters.', keyboard()); return }
   const tgId = String(ctx.from.id)
   const user = await db.getUserByTgId(tgId)
   if (!user) return
