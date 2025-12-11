@@ -16,6 +16,14 @@ bot.start(async ctx => {
   const u = ctx.from
   await db.upsertUser({ tg_id: String(u.id), username: u.username || '', first_name: u.first_name || '', last_name: u.last_name || '' })
   const msg = await db.getSetting('welcome_message') || 'Welcome to ElevenLabs TTS Bot'
+  try {
+    const photo = await db.getSetting('welcome_photo')
+    const audio = await db.getSetting('welcome_audio')
+    const document = await db.getSetting('welcome_document')
+    if (photo) { try { await ctx.replyWithPhoto({ source: photo }, { caption: msg }) } catch(_){} }
+    if (audio) { try { await ctx.replyWithAudio({ source: audio }, { caption: msg }) } catch(_){} }
+    if (document) { try { await ctx.replyWithDocument({ source: document }, { caption: msg }) } catch(_){} }
+  } catch(_){}
   await ctx.reply(msg, keyboard())
 })
 bot.hears('Contact', async ctx => {

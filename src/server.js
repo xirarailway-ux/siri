@@ -122,11 +122,14 @@ app.get('/admin/settings', ensureAdmin, async (req, res) => {
   const pm = await db.getPaymentMethods()
   const pm_qr = await db.getPaymentQRCodes()
   const bdt_per_usd = await db.getSetting('bdt_per_usd') || '120'
+  const welcome_photo = await db.getSetting('welcome_photo') || ''
+  const welcome_audio = await db.getSetting('welcome_audio') || ''
+  const welcome_document = await db.getSetting('welcome_document') || ''
   const test_ok = (req.query.test_ok === '1') ? true : false
   const test_error = req.query.test_error ? req.query.test_error : null
   const import_ok = (req.query.import_ok === '1') ? true : false
   const import_error = req.query.import_error ? req.query.import_error : null
-  res.render('settings', { payment_instructions, contact, welcome_message, eleven_api_key, tts_model_id, tts_output_format, tts_style, tts_stability, tts_similarity_boost, tts_use_speaker_boost, pm, pm_qr, bdt_per_usd, nav: 'settings', test_ok, test_error, import_ok, import_error })
+  res.render('settings', { payment_instructions, contact, welcome_message, welcome_photo, welcome_audio, welcome_document, eleven_api_key, tts_model_id, tts_output_format, tts_style, tts_stability, tts_similarity_boost, tts_use_speaker_boost, pm, pm_qr, bdt_per_usd, nav: 'settings', test_ok, test_error, import_ok, import_error })
 })
 app.post('/admin/settings', ensureAdmin, uploadQr.fields([
   { name: 'qr_nagad', maxCount: 1 },
@@ -135,6 +138,9 @@ app.post('/admin/settings', ensureAdmin, uploadQr.fields([
   { name: 'qr_usdt', maxCount: 1 },
   { name: 'qr_binance', maxCount: 1 },
   { name: 'qr_eth', maxCount: 1 },
+  { name: 'welcome_photo', maxCount: 1 },
+  { name: 'welcome_audio', maxCount: 1 },
+  { name: 'welcome_document', maxCount: 1 },
 ]), async (req, res) => {
   await db.setSetting('payment_instructions', (req.body.payment_instructions || '').trim())
   await db.setSetting('contact', (req.body.contact || '').trim())
@@ -158,6 +164,9 @@ app.post('/admin/settings', ensureAdmin, uploadQr.fields([
   if (f.qr_binance && f.qr_binance[0]) qr.binance = f.qr_binance[0].path
   if (f.qr_eth && f.qr_eth[0]) qr.eth = f.qr_eth[0].path
   await db.setPaymentQRCodes(qr)
+  if (f.welcome_photo && f.welcome_photo[0]) await db.setSetting('welcome_photo', f.welcome_photo[0].path)
+  if (f.welcome_audio && f.welcome_audio[0]) await db.setSetting('welcome_audio', f.welcome_audio[0].path)
+  if (f.welcome_document && f.welcome_document[0]) await db.setSetting('welcome_document', f.welcome_document[0].path)
   res.redirect('/admin/settings')
 })
 

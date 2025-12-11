@@ -46,6 +46,23 @@
         </div>
         <div class="form-grid" style="margin-top:12px">
           <div class="field">
+            <span class="label">Welcome Photo</span>
+            <input type="file" name="welcome_photo" accept="image/*" />
+            <% if (welcome_photo) { %><a class="link" href="/uploads/<%= welcome_photo.split('uploads')[1].replace('\\','/').replace(/^\//,'') %>" target="_blank">View</a><% } %>
+          </div>
+          <div class="field">
+            <span class="label">Welcome Audio</span>
+            <input type="file" name="welcome_audio" accept="audio/*" />
+            <% if (welcome_audio) { %><a class="link" href="/uploads/<%= welcome_audio.split('uploads')[1].replace('\\','/').replace(/^\//,'') %>" target="_blank">View</a><% } %>
+          </div>
+          <div class="field">
+            <span class="label">Welcome Document</span>
+            <input type="file" name="welcome_document" />
+            <% if (welcome_document) { %><a class="link" href="/uploads/<%= welcome_document.split('uploads')[1].replace('\\','/').replace(/^\//,'') %>" target="_blank">View</a><% } %>
+          </div>
+        </div>
+        <div class="form-grid" style="margin-top:12px">
+          <div class="field">
             <span class="label">TTS Model ID</span>
             <input class="input" type="text" name="tts_model_id" value="<%= tts_model_id %>" placeholder="eleven_v3" />
           </div>
