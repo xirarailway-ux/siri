@@ -35,7 +35,8 @@ bot.hears('Models', async ctx => {
       await db.setVoices(apiVoices)
       vlist = await db.listVoices(true)
     } catch (e) {
-      await ctx.reply('Models unavailable. Set the ElevenLabs API key in Admin > Settings and press Sync.', keyboard())
+      const contactMsg = await db.getSetting('contact') || 'Contact support via admin.'
+      await ctx.reply(contactMsg, keyboard())
       return
     }
   }
@@ -177,10 +178,10 @@ bot.on('text', async ctx => {
     const after = await db.getUserById(user._id)
     if ((after.credits||0) === 0) { await ctx.reply('You used all credits. Plan expired.') }
   } catch (e) {
-    const msg = e && e.message ? e.message : 'TTS failed'
-    await ctx.reply(`TTS failed: ${msg}`)
+    const contactMsg = await db.getSetting('contact') || 'Contact support via admin.'
+    await ctx.reply(contactMsg)
     const adminId = process.env.ADMIN_TELEGRAM_ID || ''
-    if (adminId) { try { await ctx.telegram.sendMessage(adminId, `TTS error for ${tgId}: ${msg}`) } catch(_){} }
+    if (adminId) { try { await ctx.telegram.sendMessage(adminId, `TTS error for ${tgId}: ${e && e.message ? e.message : 'Unknown error'}`) } catch(_){} }
   }
 })
 module.exports = { bot }
