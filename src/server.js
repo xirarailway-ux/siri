@@ -10,6 +10,7 @@ const multer = require('multer')
 const upload = multer({ dest: path.join(__dirname, '..', 'uploads', 'products') })
 const uploadQr = multer({ dest: path.join(__dirname, '..', 'uploads', 'qr') })
 const uploadBc = multer({ dest: path.join(__dirname, '..', 'uploads', 'broadcast') })
+const archiver = require('archiver')
 let bot = null
 if (botToken) { try { bot = require('./bot').bot } catch (_) {} }
 const app = express()
@@ -193,6 +194,18 @@ app.post('/admin/products/send', ensureAdmin, async (req, res) => {
     }
   }
   res.redirect('/admin/products')
+})
+app.get('/admin/export', ensureAdmin, async (req, res) => {
+  try {
+    res.setHeader('Content-Type', 'application/zip')
+    res.setHeader('Content-Disposition', 'attachment; filename="tts-export.zip"')
+    const archive = archiver('zip', { zlib: { level: 6 } })
+    archive.on('error', err => { try { res.end() } catch (_) {} })
+    archive.pipe(res)
+    archive.file(path.join(__dirname, '..', 'data', 'file.db'), { name: 'data/file.db' })
+    archive.directory(path.join(__dirname, '..', 'uploads'), 'uploads')
+    await archive.finalize()
+  } catch (_) { try { res.status(500).send('Export failed') } catch(e){} }
 })
 app.get('/admin/broadcast', ensureAdmin, async (req, res) => { res.render('broadcast', { nav: 'broadcast', sent: req.query.sent || null }) })
 app.post('/admin/broadcast/send', ensureAdmin, uploadBc.fields([{ name: 'photo', maxCount: 1 }, { name: 'audio', maxCount: 1 }, { name: 'document', maxCount: 1 }]), async (req, res) => {

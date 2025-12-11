@@ -24,7 +24,7 @@
     <div class="card reveal">
       <div class="header-row">
         <h2 class="section-title">Settings</h2>
-        <span class="note">Manage API, payments and contact info</span>
+        <div class="actions"><a class="btn btn-outline" href="/admin/export">Download Data (zip)</a></div>
       </div>
       <% if (test_ok) { %><div class="pill pill-green">ElevenLabs API: OK</div><% } %>
       <% if (test_error) { %><div class="error"><%= test_error %></div><% } %>
