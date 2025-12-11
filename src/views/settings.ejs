@@ -26,6 +26,8 @@
         <h2 class="section-title">Settings</h2>
         <div class="actions"><a class="btn btn-outline" href="/admin/export">Download Data (zip)</a></div>
       </div>
+      <% if (import_ok) { %><div class="pill pill-green">Import successful</div><% } %>
+      <% if (import_error) { %><div class="error"><%= import_error %></div><% } %>
       <% if (test_ok) { %><div class="pill pill-green">ElevenLabs API: OK</div><% } %>
       <% if (test_error) { %><div class="error"><%= test_error %></div><% } %>
       <% if (test_ok && typeof test_audio !== 'undefined' && test_audio) { %>
@@ -142,6 +144,7 @@
           <button class="btn">Save</button>
           <form method="post" action="/admin/settings/test-eleven" class="inline"><button class="btn btn-outline">Test API</button></form>
           <form method="post" action="/admin/settings/try-tts" class="inline"><button class="btn btn-outline">Generate Test Audio</button></form>
+          <form method="post" action="/admin/import" class="inline" enctype="multipart/form-data"><input type="file" name="backup" accept="application/zip" /><button class="btn btn-outline">Import Data</button></form>
         </div>
       </form>
     </div>

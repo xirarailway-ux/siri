@@ -10,7 +10,9 @@ const multer = require('multer')
 const upload = multer({ dest: path.join(__dirname, '..', 'uploads', 'products') })
 const uploadQr = multer({ dest: path.join(__dirname, '..', 'uploads', 'qr') })
 const uploadBc = multer({ dest: path.join(__dirname, '..', 'uploads', 'broadcast') })
+const uploadBackup = multer({ dest: path.join(__dirname, '..', 'uploads', 'tmp') })
 const archiver = require('archiver')
+const extract = require('extract-zip')
 let bot = null
 if (botToken) { try { bot = require('./bot').bot } catch (_) {} }
 const app = express()
@@ -120,7 +122,9 @@ app.get('/admin/settings', ensureAdmin, async (req, res) => {
   const bdt_per_usd = await db.getSetting('bdt_per_usd') || '120'
   const test_ok = (req.query.test_ok === '1') ? true : false
   const test_error = req.query.test_error ? req.query.test_error : null
-  res.render('settings', { payment_instructions, contact, eleven_api_key, tts_model_id, tts_output_format, tts_style, tts_stability, tts_similarity_boost, tts_use_speaker_boost, pm, pm_qr, bdt_per_usd, nav: 'settings', test_ok, test_error })
+  const import_ok = (req.query.import_ok === '1') ? true : false
+  const import_error = req.query.import_error ? req.query.import_error : null
+  res.render('settings', { payment_instructions, contact, eleven_api_key, tts_model_id, tts_output_format, tts_style, tts_stability, tts_similarity_boost, tts_use_speaker_boost, pm, pm_qr, bdt_per_usd, nav: 'settings', test_ok, test_error, import_ok, import_error })
 })
 app.post('/admin/settings', ensureAdmin, uploadQr.fields([
   { name: 'qr_nagad', maxCount: 1 },
@@ -206,6 +210,33 @@ app.get('/admin/export', ensureAdmin, async (req, res) => {
     archive.directory(path.join(__dirname, '..', 'uploads'), 'uploads')
     await archive.finalize()
   } catch (_) { try { res.status(500).send('Export failed') } catch(e){} }
+})
+app.post('/admin/import', ensureAdmin, uploadBackup.single('backup'), async (req, res) => {
+  try {
+    const zipPath = req.file ? req.file.path : ''
+    if (!zipPath) { res.redirect('/admin/settings?import_error=' + encodeURIComponent('No file')); return }
+    const tempDir = path.join(__dirname, '..', 'uploads', 'restore_' + Date.now())
+    fs.mkdirSync(tempDir, { recursive: true })
+    await extract(zipPath, { dir: tempDir })
+    const dbSrc = path.join(tempDir, 'data', 'file.db')
+    const upSrc = path.join(tempDir, 'uploads')
+    const dbDst = path.join(__dirname, '..', 'data', 'file.db')
+    const upDst = path.join(__dirname, '..', 'uploads')
+    function copyDir(src, dst) {
+      if (!fs.existsSync(dst)) fs.mkdirSync(dst, { recursive: true })
+      const entries = fs.readdirSync(src, { withFileTypes: true })
+      for (const e of entries) {
+        const s = path.join(src, e.name)
+        const d = path.join(dst, e.name)
+        if (e.isDirectory()) { copyDir(s, d) } else { fs.copyFileSync(s, d) }
+      }
+    }
+    if (fs.existsSync(dbSrc)) fs.copyFileSync(dbSrc, dbDst)
+    if (fs.existsSync(upSrc)) copyDir(upSrc, upDst)
+    res.redirect('/admin/settings?import_ok=1')
+  } catch (e) {
+    res.redirect('/admin/settings?import_error=' + encodeURIComponent(e.message || 'Import failed'))
+  }
 })
 app.get('/admin/broadcast', ensureAdmin, async (req, res) => { res.render('broadcast', { nav: 'broadcast', sent: req.query.sent || null }) })
 app.post('/admin/broadcast/send', ensureAdmin, uploadBc.fields([{ name: 'photo', maxCount: 1 }, { name: 'audio', maxCount: 1 }, { name: 'document', maxCount: 1 }]), async (req, res) => {
