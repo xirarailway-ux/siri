@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Plans</title>
+  <link rel="stylesheet" href="/public/css/style.css" />
+</head>
+<body>
+  <header class="navbar">
+    <div class="brand">TTS Admin</div>
+    <nav>
+      <a class="<%= nav==='dashboard'?'active':'' %>" href="/admin">Dashboard</a>
+      <a class="<%= nav==='users'?'active':'' %>" href="/admin/users">Users</a>
+      <a class="<%= nav==='payments'?'active':'' %>" href="/admin/payments">Payments</a>
+      <a class="<%= nav==='voices'?'active':'' %>" href="/admin/voices">Voices</a>
+      <a class="<%= nav==='plans'?'active':'' %>" href="/admin/plans">Plans</a>
+      <a class="<%= nav==='broadcast'?'active':'' %>" href="/admin/broadcast">Broadcast</a>
+      <a class="<%= nav==='settings'?'active':'' %>" href="/admin/settings">Settings</a>
+      <a href="/admin/logout">Logout</a>
+    </nav>
+  </header>
+  <main class="container">
+    <div class="card reveal">
+      <div class="header-row">
+        <h2 class="section-title">Plans</h2>
+        <span class="badge"><%= plans.length %> total</span>
+      </div>
+      <form method="post" action="/admin/plans/create" class="inline">
+        <input type="text" name="name" placeholder="Name" required />
+        <input type="number" name="credits" placeholder="Credits" min="1" required />
+        <input type="number" name="valid_days" placeholder="Validity (days)" min="0" />
+        <input type="text" name="price" placeholder="Price" required />
+        <button class="btn btn-primary">Create</button>
+      </form>
+      <table>
+        <thead><tr><th>ID</th><th>Name</th><th>Credits</th><th>Validity</th><th>Price</th><th>Active</th><th>Actions</th></tr></thead>
+        <tbody>
+          <% plans.forEach(p => { %>
+            <tr>
+              <td><%= p._id %></td>
+              <td><%= p.name %></td>
+              <td><%= p.credits %></td>
+              <td><%= p.valid_days || 0 %> days</td>
+              <td><%= p.price %></td>
+              <td>
+                <% if (p.is_active) { %>
+                  <span class="pill pill-green">Active</span>
+                <% } else { %>
+                  <span class="pill pill-red">Inactive</span>
+                <% } %>
+              </td>
+              <td>
+                <form method="post" action="/admin/plans/toggle" class="inline">
+                  <input type="hidden" name="id" value="<%= p._id %>" />
+                  <input type="hidden" name="active" value="<%= p.is_active ? 0 : 1 %>" />
+                  <button class="btn btn-outline"><%= p.is_active ? 'Deactivate' : 'Activate' %></button>
+                </form>
+                <form method="post" action="/admin/plans/delete" class="inline">
+                  <input type="hidden" name="id" value="<%= p._id %>" />
+                  <button class="btn btn-danger">Delete</button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </main>
+  <script src="/public/js/ui.js"></script>
+</body>
+</html>

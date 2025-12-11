@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard</title>
+  <link rel="stylesheet" href="/public/css/style.css" />
+  </head>
+<body>
+  <header class="navbar">
+    <div class="brand">TTS Admin</div>
+    <nav>
+      <a class="<%= nav==='dashboard'?'active':'' %>" href="/admin">Dashboard</a>
+      <a class="<%= nav==='users'?'active':'' %>" href="/admin/users">Users</a>
+      <a class="<%= nav==='payments'?'active':'' %>" href="/admin/payments">Payments</a>
+      <a class="<%= nav==='voices'?'active':'' %>" href="/admin/voices">Voices</a>
+      <a class="<%= nav==='plans'?'active':'' %>" href="/admin/plans">Plans</a>
+      <a class="<%= nav==='broadcast'?'active':'' %>" href="/admin/broadcast">Broadcast</a>
+      <a class="<%= nav==='settings'?'active':'' %>" href="/admin/settings">Settings</a>
+      <a href="/admin/logout">Logout</a>
+    </nav>
+  </header>
+  <main class="container">
+    <div class="hero reveal">
+      <div>
+        <h1>Control Center</h1>
+        <p>Manage users, payments, voices, and plans.</p>
+      </div>
+      <div class="badge">Live</div>
+    </div>
+    <div class="card reveal">
+      <h2>Overview</h2>
+      <div class="stats">
+        <div class="stat"><div class="value"><%= stats.users %></div><div class="label">Users</div></div>
+        <div class="stat"><div class="value"><%= stats.gens %></div><div class="label">Generations</div></div>
+        <div class="stat"><div class="value"><%= stats.pend %></div><div class="label">Pending Payments</div></div>
+        <div class="stat"><div class="value"><%= stats.sales %></div><div class="label">Sales</div></div>
+        <div class="stat"><div class="value"><%= stats.buyers %></div><div class="label">Buyers</div></div>
+        <div class="stat"><div class="value"><%= stats.activeCredits %></div><div class="label">Active Credits</div></div>
+        <div class="stat"><div class="value"><%= stats.inactiveWithCredits %></div><div class="label">Inactive 5+ Days</div></div>
+        <div class="stat"><div class="value"><%= stats.expiredUsers %></div><div class="label">Expired</div></div>
+      </div>
+    </div>
+    <div class="card reveal">
+      <h2>Latest Pending Payments</h2>
+      <div class="grid">
+        <% pending.forEach(p => { %>
+          <div class="grid-item">
+            <img src="/uploads/payments/<%= p.screenshot_path.split('payments')[1].replace('\\','/').replace(/^\//,'') %>" />
+            <div>@<%= p.username %> • <%= p.plan_name %></div>
+            <div class="actions" style="margin-top:8px">
+              <form method="post" action="/admin/payments/approve" class="inline">
+                <input type="hidden" name="id" value="<%= p._id %>" />
+                <button class="btn">Approve</button>
+              </form>
+              <form method="post" action="/admin/payments/reject" class="inline">
+                <input type="hidden" name="id" value="<%= p._id %>" />
+                <button class="btn btn-danger">Reject</button>
+              </form>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    </div>
+  </main>
+  <script src="/public/js/ui.js"></script>
+</body>
+</html>

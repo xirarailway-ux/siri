@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>User</title>
+  <link rel="stylesheet" href="/public/css/style.css" />
+</head>
+<body>
+  <header class="navbar">
+    <div class="brand">TTS Admin</div>
+    <nav>
+      <a class="<%= nav==='dashboard'?'active':'' %>" href="/admin">Dashboard</a>
+      <a class="<%= nav==='users'?'active':'' %>" href="/admin/users">Users</a>
+      <a class="<%= nav==='payments'?'active':'' %>" href="/admin/payments">Payments</a>
+      <a class="<%= nav==='voices'?'active':'' %>" href="/admin/voices">Voices</a>
+      <a class="<%= nav==='plans'?'active':'' %>" href="/admin/plans">Plans</a>
+      <a class="<%= nav==='broadcast'?'active':'' %>" href="/admin/broadcast">Broadcast</a>
+      <a class="<%= nav==='products'?'active':'' %>" href="/admin/products">Products</a>
+      <a class="<%= nav==='settings'?'active':'' %>" href="/admin/settings">Settings</a>
+      <a href="/admin/logout">Logout</a>
+    </nav>
+  </header>
+  <main class="container">
+    <div class="card reveal">
+      <div class="header-row">
+        <h2 class="section-title">Profile</h2>
+        <div class="actions">
+          <span class="pill <%= user.is_blocked ? 'pill-red' : 'pill-green' %>"><%= user.is_blocked ? 'Blocked' : 'Active' %></span>
+          <span class="badge">Credits: <%= user.credits %></span>
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="field"><span class="label">Username</span><div><%= user.username || '' %></div></div>
+        <div class="field"><span class="label">Telegram ID</span><div><%= user.tg_id %></div></div>
+        <div class="field"><span class="label">Selected Voice</span><div><%= user.selected_voice_id || 'None' %></div></div>
+        <div class="field"><span class="label">Created</span><div><%= user.created_at %></div></div>
+        <div class="field"><span class="label">Expiry</span><div><%= user.credit_expires_at || 'None' %></div></div>
+        <div class="field"><span class="label">Last Generation</span><div><%= user.last_generation_at || 'None' %></div></div>
+      </div>
+      <div class="actions" style="margin-top:12px">
+        <form method="post" action="/admin/users/add-credits" class="inline">
+          <input type="hidden" name="id" value="<%= user.tg_id %>" />
+          <input class="input small" type="number" name="amount" min="1" value="1" />
+          <input class="input small" type="number" name="valid_days" min="0" placeholder="Days" />
+          <button class="btn btn-outline">Add Credits</button>
+        </form>
+        <form method="post" action="/admin/users/remove-credits" class="inline">
+          <input type="hidden" name="id" value="<%= user.tg_id %>" />
+          <input class="input small" type="number" name="amount" min="1" value="1" />
+          <button class="btn btn-outline">Remove Credits</button>
+        </form>
+      </div>
+    </div>
+    <div class="card reveal">
+      <h2 class="section-title">Subscriptions</h2>
+      <table>
+        <thead><tr><th>ID</th><th>Plan</th><th>Status</th><th>Created</th></tr></thead>
+        <tbody>
+          <% payments.forEach(p => { %>
+            <tr>
+              <td><%= p._id %></td>
+              <td><%= p.plan_name %></td>
+              <td><%= p.status %></td>
+              <td><%= p.created_at %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <div class="card reveal">
+      <h2 class="section-title">Voice History</h2>
+      <table>
+        <thead><tr><th>ID</th><th>Voice</th><th>Length</th><th>Audio</th><th>Created</th></tr></thead>
+        <tbody>
+          <% generations.forEach(g => { %>
+            <tr>
+              <td><%= g._id %></td>
+              <td><%= g.voice_id %></td>
+              <td><%= g.text_length %></td>
+              <td>
+                <% if (g.audio_path) { %>
+                  <a href="/uploads/<%= g.audio_path.split('uploads')[1].replace('\\','/').replace(/^\//,'') %>" target="_blank">Play</a>
+                <% } else { %>
+                  Delivered in Telegram chat
+                <% } %>
+              </td>
+              <td><%= g.created_at %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </main>
+  <script src="/public/js/ui.js"></script>
+</body>
+</html>

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Users</title>
+  <link rel="stylesheet" href="/public/css/style.css" />
+</head>
+<body>
+  <header class="navbar">
+    <div class="brand">TTS Admin</div>
+    <nav>
+      <a class="<%= nav==='dashboard'?'active':'' %>" href="/admin">Dashboard</a>
+      <a class="<%= nav==='users'?'active':'' %>" href="/admin/users">Users</a>
+      <a class="<%= nav==='payments'?'active':'' %>" href="/admin/payments">Payments</a>
+      <a class="<%= nav==='voices'?'active':'' %>" href="/admin/voices">Voices</a>
+      <a class="<%= nav==='plans'?'active':'' %>" href="/admin/plans">Plans</a>
+      <a class="<%= nav==='broadcast'?'active':'' %>" href="/admin/broadcast">Broadcast</a>
+      <a class="<%= nav==='settings'?'active':'' %>" href="/admin/settings">Settings</a>
+      <a href="/admin/logout">Logout</a>
+    </nav>
+  </header>
+  <main class="container">
+    <div class="card reveal">
+      <div class="header-row">
+        <h2 class="section-title">Users</h2>
+        <span class="badge"><%= users.length %> total</span>
+      </div>
+      <table class="users-table">
+        <thead><tr><th>Telegram ID</th><th>Telegram</th><th>Credits</th><th>Blocked</th><th>Actions</th></tr></thead>
+        <tbody>
+          <% users.forEach(u => { %>
+            <tr>
+              <td><%= u.tg_id %></td>
+              <td><%= u.username || u.tg_id %></td>
+              <td><%= u.credits %></td>
+              <td>
+                <% if (u.is_blocked) { %>
+                  <span class="pill pill-red">Blocked</span>
+                <% } else { %>
+                  <span class="pill pill-green">Active</span>
+                <% } %>
+              </td>
+              <td>
+                <div class="table-actions compact">
+                  <form method="post" action="/admin/users/add-credits" class="inline">
+                    <input type="hidden" name="id" value="<%= u.tg_id %>" />
+                    <input class="input small" type="number" name="amount" min="1" value="1" placeholder="Amt" />
+                    <input class="input small" type="number" name="valid_days" min="0" placeholder="Days" />
+                    <button class="btn btn-outline">Add</button>
+                  </form>
+                  <form method="post" action="/admin/users/remove-credits" class="inline">
+                    <input type="hidden" name="id" value="<%= u.tg_id %>" />
+                    <input class="input small" type="number" name="amount" min="1" value="1" placeholder="Amt" />
+                    <button class="btn btn-outline">Remove</button>
+                  </form>
+                  <% if (!u.is_blocked) { %>
+                    <form method="post" action="/admin/users/block" class="inline">
+                      <input type="hidden" name="id" value="<%= u.tg_id %>" />
+                      <button class="btn btn-danger">Block</button>
+                    </form>
+                  <% } else { %>
+                    <form method="post" action="/admin/users/unblock" class="inline">
+                      <input type="hidden" name="id" value="<%= u.tg_id %>" />
+                      <button class="btn btn-outline">Unblock</button>
+                    </form>
+                  <% } %>
+                  <a class="btn btn-outline" href="/admin/users/<%= u.tg_id %>">Manage</a>
+                </div>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </main>
+  <script src="/public/js/ui.js"></script>
+</body>
+</html>

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Voices</title>
+  <link rel="stylesheet" href="/public/css/style.css" />
+</head>
+<body>
+  <header class="navbar">
+    <div class="brand">TTS Admin</div>
+    <nav>
+      <a class="<%= nav==='dashboard'?'active':'' %>" href="/admin">Dashboard</a>
+      <a class="<%= nav==='users'?'active':'' %>" href="/admin/users">Users</a>
+      <a class="<%= nav==='payments'?'active':'' %>" href="/admin/payments">Payments</a>
+      <a class="<%= nav==='voices'?'active':'' %>" href="/admin/voices">Voices</a>
+      <a class="<%= nav==='plans'?'active':'' %>" href="/admin/plans">Plans</a>
+      <a class="<%= nav==='broadcast'?'active':'' %>" href="/admin/broadcast">Broadcast</a>
+      <a class="<%= nav==='settings'?'active':'' %>" href="/admin/settings">Settings</a>
+      <a href="/admin/logout">Logout</a>
+    </nav>
+  </header>
+  <main class="container">
+    <div class="card reveal">
+      <div class="header-row">
+        <h2 class="section-title">Voices</h2>
+        <span class="badge"><%= voices.length %> total</span>
+      </div>
+      <% if (error) { %><div class="error"><%= error %></div><% } %>
+      <form method="post" action="/admin/voices/sync">
+        <button class="btn btn-primary">Sync from ElevenLabs</button>
+      </form>
+      <form method="post" action="/admin/voices/add" class="inline" style="margin-top:12px;gap:12px">
+        <input type="text" name="voice_id" placeholder="Voice ID" required />
+        <input type="text" name="name" placeholder="Voice Name" required />
+        <button class="btn btn-outline">Add Voice</button>
+      </form>
+      <table>
+        <thead><tr><th>ID</th><th>Name</th><th>Enabled</th><th>Actions</th></tr></thead>
+        <tbody>
+          <% voices.forEach(v => { %>
+            <tr>
+              <td><%= v.voice_id %></td>
+              <td><%= v.name %></td>
+              <td>
+                <% if (v.enabled) { %>
+                  <span class="pill pill-green">Enabled</span>
+                <% } else { %>
+                  <span class="pill pill-red">Disabled</span>
+                <% } %>
+              </td>
+              <td>
+                <form method="post" action="/admin/voices/toggle" class="inline">
+                  <input type="hidden" name="voice_id" value="<%= v.voice_id %>" />
+                  <input type="hidden" name="enabled" value="<%= v.enabled ? 0 : 1 %>" />
+                  <button class="btn btn-outline"><%= v.enabled ? 'Disable' : 'Enable' %></button>
+                </form>
+                <form method="post" action="/admin/voices/remove" class="inline">
+                  <input type="hidden" name="voice_id" value="<%= v.voice_id %>" />
+                  <button class="btn btn-danger">Remove</button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </main>
+  <script src="/public/js/ui.js"></script>
+</body>
+</html>

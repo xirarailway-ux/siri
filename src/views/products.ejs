@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Products</title>
+  <link rel="stylesheet" href="/public/css/style.css" />
+</head>
+<body>
+  <header class="navbar">
+    <div class="brand">TTS Admin</div>
+    <nav>
+      <a class="<%= nav==='dashboard'?'active':'' %>" href="/admin">Dashboard</a>
+      <a class="<%= nav==='users'?'active':'' %>" href="/admin/users">Users</a>
+      <a class="<%= nav==='payments'?'active':'' %>" href="/admin/payments">Payments</a>
+      <a class="<%= nav==='voices'?'active':'' %>" href="/admin/voices">Voices</a>
+      <a class="<%= nav==='plans'?'active':'' %>" href="/admin/plans">Plans</a>
+      <a class="<%= nav==='broadcast'?'active':'' %>" href="/admin/broadcast">Broadcast</a>
+      <a class="<%= nav==='products'?'active':'' %>" href="/admin/products">Products</a>
+      <a class="<%= nav==='settings'?'active':'' %>" href="/admin/settings">Settings</a>
+      <a href="/admin/logout">Logout</a>
+    </nav>
+  </header>
+  <main class="container">
+    <div class="card reveal">
+      <h2>Create Product</h2>
+      <form method="post" action="/admin/products/create" enctype="multipart/form-data" class="inline" style="gap:12px;flex-wrap:wrap">
+        <input type="text" name="title" placeholder="Title" required />
+        <input type="text" name="price" placeholder="Price (optional)" />
+        <input type="file" name="file" />
+        <textarea name="text" rows="3" placeholder="Message"></textarea>
+        <button>Create</button>
+      </form>
+    </div>
+    <div class="card reveal">
+      <h2>Products</h2>
+      <table>
+        <thead><tr><th>ID</th><th>Title</th><th>Price</th><th>File</th><th>Actions</th></tr></thead>
+        <tbody>
+          <% products.forEach(p => { %>
+            <tr>
+              <td><%= p._id %></td>
+              <td><%= p.title %></td>
+              <td><%= p.price %></td>
+              <td><%= p.file ? p.file.split('uploads')[1].replace('\\','/').replace(/^\//,'') : '' %></td>
+              <td>
+                <form method="post" action="/admin/products/send" class="inline">
+                  <input type="hidden" name="id" value="<%= p._id %>" />
+                  <button>Send</button>
+                </form>
+                <form method="post" action="/admin/products/delete" class="inline">
+                  <input type="hidden" name="id" value="<%= p._id %>" />
+                  <button>Delete</button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </main>
+  <script src="/public/js/ui.js"></script>
+</body>
+</html>

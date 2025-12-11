@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Payments</title>
+  <link rel="stylesheet" href="/public/css/style.css" />
+</head>
+<body>
+  <header class="navbar">
+    <div class="brand">TTS Admin</div>
+    <nav>
+      <a class="<%= nav==='dashboard'?'active':'' %>" href="/admin">Dashboard</a>
+      <a class="<%= nav==='users'?'active':'' %>" href="/admin/users">Users</a>
+      <a class="<%= nav==='payments'?'active':'' %>" href="/admin/payments">Payments</a>
+      <a class="<%= nav==='voices'?'active':'' %>" href="/admin/voices">Voices</a>
+      <a class="<%= nav==='plans'?'active':'' %>" href="/admin/plans">Plans</a>
+      <a class="<%= nav==='broadcast'?'active':'' %>" href="/admin/broadcast">Broadcast</a>
+      <a class="<%= nav==='settings'?'active':'' %>" href="/admin/settings">Settings</a>
+      <a href="/admin/logout">Logout</a>
+    </nav>
+  </header>
+  <main class="container">
+    <div class="card reveal">
+      <div class="header-row">
+        <h2 class="section-title">Payments</h2>
+        <span class="badge"><%= payments.length %> total</span>
+      </div>
+      <table>
+        <thead><tr><th>ID</th><th>User</th><th>Plan</th><th>Method</th><th>Status</th><th>Screenshot</th><th>Actions</th></tr></thead>
+        <tbody>
+          <% payments.forEach(p => { %>
+            <tr>
+              <td><%= p._id %></td>
+              <td><%= p.username %></td>
+              <td><%= p.plan_name %></td>
+              <td><%= p.method || '-' %></td>
+              <td>
+                <% if (p.status === 'pending') { %>
+                  <span class="pill status-pending">Pending</span>
+                <% } else if (p.status === 'approved') { %>
+                  <span class="pill status-approved">Approved</span>
+                <% } else { %>
+                  <span class="pill status-rejected">Rejected</span>
+                <% } %>
+              </td>
+              <td><a class="link" href="/uploads/<%= p.screenshot_path.split('uploads')[1].replace('\\','/').replace(/^\//,'') %>" target="_blank">View</a></td>
+              <td>
+                <% if (p.status === 'pending') { %>
+                  <form method="post" action="/admin/payments/approve" class="inline">
+                    <input type="hidden" name="id" value="<%= p._id %>" />
+                    <button class="btn btn-secondary">Approve</button>
+                  </form>
+                  <form method="post" action="/admin/payments/reject" class="inline">
+                    <input type="hidden" name="id" value="<%= p._id %>" />
+                    <button class="btn btn-danger">Reject</button>
+                  </form>
+                <% } %>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </main>
+  <script src="/public/js/ui.js"></script>
+</body>
+</html>

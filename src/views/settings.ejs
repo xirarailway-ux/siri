@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Settings</title>
+  <link rel="stylesheet" href="/public/css/style.css" />
+</head>
+<body>
+  <header class="navbar">
+    <div class="brand">TTS Admin</div>
+    <nav>
+      <a class="<%= nav==='dashboard'?'active':'' %>" href="/admin">Dashboard</a>
+      <a class="<%= nav==='users'?'active':'' %>" href="/admin/users">Users</a>
+      <a class="<%= nav==='payments'?'active':'' %>" href="/admin/payments">Payments</a>
+      <a class="<%= nav==='voices'?'active':'' %>" href="/admin/voices">Voices</a>
+      <a class="<%= nav==='plans'?'active':'' %>" href="/admin/plans">Plans</a>
+      <a class="<%= nav==='broadcast'?'active':'' %>" href="/admin/broadcast">Broadcast</a>
+      <a class="<%= nav==='settings'?'active':'' %>" href="/admin/settings">Settings</a>
+      <a href="/admin/logout">Logout</a>
+    </nav>
+  </header>
+  <main class="container">
+    <div class="card reveal">
+      <div class="header-row">
+        <h2 class="section-title">Settings</h2>
+        <span class="note">Manage API, payments and contact info</span>
+      </div>
+      <% if (test_ok) { %><div class="pill pill-green">ElevenLabs API: OK</div><% } %>
+      <% if (test_error) { %><div class="error"><%= test_error %></div><% } %>
+      <% if (test_ok && typeof test_audio !== 'undefined' && test_audio) { %>
+        <div class="actions" style="margin:8px 0">
+          <a class="btn btn-outline" href="/uploads/<%= test_audio %>" target="_blank">Play Test Audio</a>
+        </div>
+      <% } %>
+      <form method="post" action="/admin/settings" enctype="multipart/form-data">
+        <div class="field">
+          <span class="label">ElevenLabs API Key</span>
+          <input class="input" type="text" name="eleven_api_key" value="<%= eleven_api_key %>" placeholder="xi-api-key" />
+        </div>
+        <div class="form-grid" style="margin-top:12px">
+          <div class="field">
+            <span class="label">TTS Model ID</span>
+            <input class="input" type="text" name="tts_model_id" value="<%= tts_model_id %>" placeholder="eleven_v3" />
+          </div>
+          <div class="field">
+            <span class="label">Output Format</span>
+            <input class="input" type="text" name="tts_output_format" value="<%= tts_output_format %>" placeholder="ogg_64" />
+          </div>
+        </div>
+        <div class="form-grid" style="margin-top:12px">
+          <div class="field">
+            <span class="label">Style (0–1)</span>
+            <input class="input" type="number" step="0.01" min="0" max="1" name="tts_style" value="<%= tts_style %>" placeholder="0.00" />
+          </div>
+          <div class="field">
+            <span class="label">Stability (0–1)</span>
+            <input class="input" type="number" step="0.01" min="0" max="1" name="tts_stability" value="<%= tts_stability %>" />
+          </div>
+          <div class="field">
+            <span class="label">Similarity Boost (0–1)</span>
+            <input class="input" type="number" step="0.01" min="0" max="1" name="tts_similarity_boost" value="<%= tts_similarity_boost %>" />
+          </div>
+          <div class="field" style="align-items:flex-start">
+            <span class="label">Speaker Boost</span>
+            <label style="display:flex;align-items:center;gap:8px"><input type="checkbox" name="tts_use_speaker_boost" <%= tts_use_speaker_boost==='1'?'checked':'' %> /> Enable</label>
+          </div>
+        </div>
+        <div class="field" style="margin-top:12px">
+          <span class="label">Payment Instructions</span>
+          <textarea class="input" name="payment_instructions" rows="4"><%= payment_instructions %></textarea>
+        </div>
+        <div class="form-grid" style="margin-top:12px">
+          <div class="field">
+            <span class="label">USD → BDT Rate</span>
+            <input class="input" type="number" step="0.01" min="0" name="bdt_per_usd" value="<%= bdt_per_usd %>" placeholder="120" />
+          </div>
+        </div>
+        <div class="form-grid" style="margin-top:12px">
+          <div class="field">
+            <span class="label">Nagad</span>
+            <input class="input" type="text" name="nagad" value="<%= pm.nagad || '' %>" placeholder="Nagad number" />
+          </div>
+          <div class="field">
+            <span class="label">BTC</span>
+            <input class="input" type="text" name="btc" value="<%= pm.btc || '' %>" placeholder="BTC address" />
+          </div>
+          <div class="field">
+            <span class="label">LTC</span>
+            <input class="input" type="text" name="ltc" value="<%= pm.ltc || '' %>" placeholder="LTC address" />
+          </div>
+          <div class="field">
+            <span class="label">USDT</span>
+            <input class="input" type="text" name="usdt" value="<%= pm.usdt || '' %>" placeholder="USDT address" />
+          </div>
+          <div class="field">
+            <span class="label">Binance ID</span>
+            <input class="input" type="text" name="binance_id" value="<%= pm.binance_id || '' %>" placeholder="Binance ID" />
+          </div>
+          <div class="field">
+            <span class="label">ETH</span>
+            <input class="input" type="text" name="eth" value="<%= pm.eth || '' %>" placeholder="ETH address" />
+          </div>
+        </div>
+        <div class="form-grid" style="margin-top:12px">
+          <div class="field">
+            <span class="label">Nagad QR</span>
+            <input type="file" name="qr_nagad" accept="image/*" />
+            <% if (pm_qr && pm_qr.nagad) { %><a class="link" href="/uploads/<%= pm_qr.nagad.split('uploads')[1].replace('\\','/').replace(/^\//,'') %>" target="_blank">View</a><% } %>
+          </div>
+          <div class="field">
+            <span class="label">BTC QR</span>
+            <input type="file" name="qr_btc" accept="image/*" />
+            <% if (pm_qr && pm_qr.btc) { %><a class="link" href="/uploads/<%= pm_qr.btc.split('uploads')[1].replace('\\','/').replace(/^\//,'') %>" target="_blank">View</a><% } %>
+          </div>
+          <div class="field">
+            <span class="label">LTC QR</span>
+            <input type="file" name="qr_ltc" accept="image/*" />
+            <% if (pm_qr && pm_qr.ltc) { %><a class="link" href="/uploads/<%= pm_qr.ltc.split('uploads')[1].replace('\\','/').replace(/^\//,'') %>" target="_blank">View</a><% } %>
+          </div>
+          <div class="field">
+            <span class="label">USDT QR</span>
+            <input type="file" name="qr_usdt" accept="image/*" />
+            <% if (pm_qr && pm_qr.usdt) { %><a class="link" href="/uploads/<%= pm_qr.usdt.split('uploads')[1].replace('\\','/').replace(/^\//,'') %>" target="_blank">View</a><% } %>
+          </div>
+          <div class="field">
+            <span class="label">Binance QR</span>
+            <input type="file" name="qr_binance" accept="image/*" />
+            <% if (pm_qr && pm_qr.binance) { %><a class="link" href="/uploads/<%= pm_qr.binance.split('uploads')[1].replace('\\','/').replace(/^\//,'') %>" target="_blank">View</a><% } %>
+          </div>
+          <div class="field">
+            <span class="label">ETH QR</span>
+            <input type="file" name="qr_eth" accept="image/*" />
+            <% if (pm_qr && pm_qr.eth) { %><a class="link" href="/uploads/<%= pm_qr.eth.split('uploads')[1].replace('\\','/').replace(/^\//,'') %>" target="_blank">View</a><% } %>
+          </div>
+        </div>
+        <div class="field" style="margin-top:12px">
+          <span class="label">Contact Info</span>
+          <textarea class="input" name="contact" rows="3"><%= contact %></textarea>
+        </div>
+        <div class="actions" style="margin-top:12px">
+          <button class="btn">Save</button>
+          <form method="post" action="/admin/settings/test-eleven" class="inline"><button class="btn btn-outline">Test API</button></form>
+          <form method="post" action="/admin/settings/try-tts" class="inline"><button class="btn btn-outline">Generate Test Audio</button></form>
+        </div>
+      </form>
+    </div>
+  </main>
+  <script src="/public/js/ui.js"></script>
+</body>
+</html>
