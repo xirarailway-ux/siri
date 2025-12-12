@@ -261,13 +261,18 @@ app.get('/admin/files', ensureAdmin, async (req, res) => {
   try {
     const rel = String(req.query.p || '').replace(/^\/*/, '')
     const cur = safeJoin(ROOT, rel)
-    const list = fs.readdirSync(cur, { withFileTypes: true }).map(d => {
-      const fp = path.join(cur, d.name)
-      const st = fs.statSync(fp)
-      return { name: d.name, is_dir: d.isDirectory(), size: st.size, mtime: st.mtime.toISOString() }
-    }).sort((a,b)=> a.is_dir===b.is_dir ? a.name.localeCompare(b.name) : (a.is_dir? -1:1))
+    let entries = []
+    try {
+      const dirents = fs.readdirSync(cur, { withFileTypes: true })
+      entries = dirents.map(d => {
+        const fp = path.join(cur, d.name)
+        let st = { size: 0, mtime: new Date() }
+        try { st = fs.statSync(fp) } catch (_) {}
+        return { name: d.name, is_dir: d.isDirectory(), size: st.size || 0, mtime: (st.mtime || new Date()).toISOString() }
+      }).sort((a,b)=> a.is_dir===b.is_dir ? a.name.localeCompare(b.name) : (a.is_dir? -1:1))
+    } catch (_) {}
     const crumbs = rel.split('/').filter(Boolean)
-    res.render('filemanager', { nav: 'files', entries: list, rel, crumbs, fileContent: null, fileName: '' })
+    res.render('filemanager', { nav: 'files', entries, rel, crumbs, fileContent: null, fileName: '' })
   } catch (e) {
     res.render('filemanager', { nav: 'files', entries: [], rel: '', crumbs: [], error: e.message || 'Failed', fileContent: null, fileName: '' })
   }
