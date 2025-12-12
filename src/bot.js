@@ -9,7 +9,8 @@ const bot = new Telegraf(botToken)
 function keyboard() {
   return Markup.keyboard([
     ['Plans', 'Models'],
-    ['Profile', 'Contact']
+    ['Profile', 'Contact'],
+    ['Help']
   ]).resize().persistent()
 }
 bot.start(async ctx => {
@@ -39,6 +40,19 @@ bot.start(async ctx => {
 bot.hears('Contact', async ctx => {
   const instr = await db.getSetting('contact') || 'Contact admin: @TheMysteriousGhost'
   await ctx.reply(instr, keyboard())
+})
+bot.hears('Help', async ctx => {
+  const help = [
+    'How to use:',
+    '1) Models: choose a voice model.',
+    '2) Plans: buy credits. Each generation uses 1 credit.',
+    '3) Generate: send a text message (max 200 characters) to get TTS audio.',
+    '4) Free credit: join our channel https://t.me/Siriupdates and press Verify to get 1 free credit (first time only).',
+    '5) Payments: after selecting a plan and method, pay and send the screenshot here. Admin will approve.',
+    '6) Profile: see your credits, selected voice, and expiry.',
+    'Need help? Contact admin: @TheMysteriousGhost'
+  ].join('\\n')
+  await ctx.reply(help, keyboard())
 })
 bot.hears('Profile', async ctx => {
   const user = await db.getUserByTgId(String(ctx.from.id))
