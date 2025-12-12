@@ -14,13 +14,6 @@ const uploadBc = multer({ dest: path.join(__dirname, '..', 'uploads', 'broadcast
 const uploadBackup = multer({ dest: path.join(__dirname, '..', 'uploads', 'tmp') })
 const archiver = require('archiver')
 const extract = require('extract-zip')
-const ROOT = path.resolve(path.join(__dirname, '..'))
-function safeJoin(base, p1='', p2='', p3='') { const target = path.resolve(base, p1, p2, p3); if (!target.startsWith(base)) throw new Error('Invalid path'); return target }
-const fmStorage = multer.diskStorage({
-  destination: (req, file, cb) => { try { const dest = safeJoin(ROOT, req.body.dest || ''); fs.mkdirSync(dest, { recursive: true }); cb(null, dest) } catch (e) { cb(e) } },
-  filename: (req, file, cb) => cb(null, file.originalname)
-})
-const uploadFM = multer({ storage: fmStorage })
 let bot = null
 if (botToken) { try { bot = require('./bot').bot } catch (_) {} }
 const app = express()
@@ -256,91 +249,6 @@ app.post('/admin/import', ensureAdmin, uploadBackup.single('backup'), async (req
   } catch (e) {
     res.redirect('/admin/settings?import_error=' + encodeURIComponent(e.message || 'Import failed'))
   }
-})
-app.get('/admin/files', ensureAdmin, async (req, res) => {
-  try {
-    const rel = String(req.query.p || '').replace(/^\/*/, '')
-    const cur = safeJoin(ROOT, rel)
-    let entries = []
-    try {
-      const dirents = fs.readdirSync(cur, { withFileTypes: true })
-      entries = dirents.map(d => {
-        const fp = path.join(cur, d.name)
-        let st = { size: 0, mtime: new Date() }
-        try { st = fs.statSync(fp) } catch (_) {}
-        return { name: d.name, is_dir: d.isDirectory(), size: st.size || 0, mtime: (st.mtime || new Date()).toISOString() }
-      }).sort((a,b)=> a.is_dir===b.is_dir ? a.name.localeCompare(b.name) : (a.is_dir? -1:1))
-    } catch (_) {}
-    const crumbs = rel.split('/').filter(Boolean)
-    res.render('filemanager', { nav: 'files', entries, rel, crumbs, fileContent: null, fileName: '' })
-  } catch (e) {
-    res.render('filemanager', { nav: 'files', entries: [], rel: '', crumbs: [], error: e.message || 'Failed', fileContent: null, fileName: '' })
-  }
-})
-app.get('/admin/files/download', ensureAdmin, async (req, res) => {
-  try {
-    const rel = String(req.query.p || '').replace(/^\/*/, '')
-    const fp = safeJoin(ROOT, rel)
-    if (fs.statSync(fp).isDirectory()) { res.status(400).send('Not a file'); return }
-    res.download(fp, path.basename(fp))
-  } catch (e) { res.status(500).send('Download failed') }
-})
-app.post('/admin/files/upload', ensureAdmin, uploadFM.single('file'), async (req, res) => {
-  const dest = req.body.dest || ''
-  res.redirect('/admin/files?p=' + encodeURIComponent(dest))
-})
-app.post('/admin/files/mkdir', ensureAdmin, async (req, res) => {
-  try {
-    const rel = String(req.body.p || '').replace(/^\/*/, '')
-    const name = String(req.body.name || '').trim()
-    if (!name) return res.redirect('/admin/files?p=' + encodeURIComponent(rel))
-    const dir = safeJoin(ROOT, rel, name)
-    fs.mkdirSync(dir, { recursive: true })
-    res.redirect('/admin/files?p=' + encodeURIComponent(rel))
-  } catch (_) { res.redirect('/admin/files?p=' + encodeURIComponent(req.body.p||'')) }
-})
-app.post('/admin/files/rename', ensureAdmin, async (req, res) => {
-  try {
-    const rel = String(req.body.p || '').replace(/^\/*/, '')
-    const oldName = String(req.body.old || '').trim()
-    const newName = String(req.body.next || '').trim()
-    if (!oldName || !newName) return res.redirect('/admin/files?p=' + encodeURIComponent(rel))
-    const src = safeJoin(ROOT, rel, oldName)
-    const dst = safeJoin(ROOT, rel, newName)
-    fs.renameSync(src, dst)
-    res.redirect('/admin/files?p=' + encodeURIComponent(rel))
-  } catch (_) { res.redirect('/admin/files?p=' + encodeURIComponent(req.body.p||'')) }
-})
-app.post('/admin/files/delete', ensureAdmin, async (req, res) => {
-  try {
-    const rel = String(req.body.p || '').replace(/^\/*/, '')
-    const name = String(req.body.name || '').trim()
-    if (!name) return res.redirect('/admin/files?p=' + encodeURIComponent(rel))
-    const target = safeJoin(ROOT, rel, name)
-    fs.rmSync(target, { recursive: true, force: true })
-    res.redirect('/admin/files?p=' + encodeURIComponent(rel))
-  } catch (_) { res.redirect('/admin/files?p=' + encodeURIComponent(req.body.p||'')) }
-})
-app.get('/admin/files/view', ensureAdmin, async (req, res) => {
-  try {
-    const rel = String(req.query.p || '').replace(/^\/*/, '')
-    const fp = safeJoin(ROOT, rel)
-    const isDir = fs.statSync(fp).isDirectory()
-    if (isDir) { res.redirect('/admin/files?p=' + encodeURIComponent(rel)); return }
-    let content = ''
-    try { content = fs.readFileSync(fp, 'utf-8') } catch (_) {}
-    res.render('filemanager', { nav: 'files', entries: [], rel, crumbs: rel.split('/').filter(Boolean), fileContent: content, fileName: path.basename(fp) })
-  } catch (e) {
-    res.render('filemanager', { nav: 'files', entries: [], rel: '', crumbs: [], error: e.message || 'Failed' })
-  }
-})
-app.post('/admin/files/save', ensureAdmin, async (req, res) => {
-  try {
-    const rel = String(req.body.p || '').replace(/^\/*/, '')
-    const fp = safeJoin(ROOT, rel)
-    fs.writeFileSync(fp, String(req.body.content || ''), 'utf-8')
-    res.redirect('/admin/files/view?p=' + encodeURIComponent(rel))
-  } catch (_) { res.redirect('/admin/files?p=' + encodeURIComponent(req.body.p||'')) }
 })
 app.get('/admin/broadcast', ensureAdmin, async (req, res) => { res.render('broadcast', { nav: 'broadcast', sent: req.query.sent || null }) })
 app.post('/admin/broadcast/send', ensureAdmin, uploadBc.fields([{ name: 'photo', maxCount: 1 }, { name: 'audio', maxCount: 1 }, { name: 'document', maxCount: 1 }]), async (req, res) => {
