@@ -4,7 +4,7 @@ const path = require('path')
 const bcrypt = require('bcryptjs')
 const bodyParser = require('body-parser')
 const fs = require('fs')
-const { port, adminPassword, botToken, baseUrl } = require('./config')
+const { port, adminPassword, botToken, baseUrl, adminTelegramId } = require('./config')
 const db = require('./db')
 const eleven = require('./elevenlabs')
 const multer = require('multer')
@@ -128,11 +128,16 @@ app.get('/admin/settings', ensureAdmin, async (req, res) => {
   const welcome_audio = await db.getSetting('welcome_audio') || ''
   const welcome_document = await db.getSetting('welcome_document') || ''
   const max_text_length = await db.getSetting('max_text_length') || '125'
+  let bot_me = null, webhook_info = null
+  if (bot) {
+    try { bot_me = await bot.telegram.getMe() } catch (_) {}
+    try { webhook_info = await bot.telegram.getWebhookInfo() } catch (_) {}
+  }
   const test_ok = (req.query.test_ok === '1') ? true : false
   const test_error = req.query.test_error ? req.query.test_error : null
   const import_ok = (req.query.import_ok === '1') ? true : false
   const import_error = req.query.import_error ? req.query.import_error : null
-  res.render('settings', { payment_instructions, contact, welcome_message, help_text, welcome_photo, welcome_audio, welcome_document, eleven_api_key, tts_model_id, tts_output_format, tts_style, tts_stability, tts_similarity_boost, tts_use_speaker_boost, pm, pm_qr, bdt_per_usd, max_text_length, nav: 'settings', test_ok, test_error, import_ok, import_error })
+  res.render('settings', { payment_instructions, contact, welcome_message, help_text, welcome_photo, welcome_audio, welcome_document, eleven_api_key, tts_model_id, tts_output_format, tts_style, tts_stability, tts_similarity_boost, tts_use_speaker_boost, pm, pm_qr, bdt_per_usd, max_text_length, bot_me, webhook_info, nav: 'settings', test_ok, test_error, import_ok, import_error })
 })
 app.post('/admin/settings', ensureAdmin, uploadQr.fields([
   { name: 'qr_nagad', maxCount: 1 },
@@ -173,6 +178,25 @@ app.post('/admin/settings', ensureAdmin, uploadQr.fields([
   if (f.welcome_audio && f.welcome_audio[0]) await db.setSetting('welcome_audio', f.welcome_audio[0].path)
   if (f.welcome_document && f.welcome_document[0]) await db.setSetting('welcome_document', f.welcome_document[0].path)
   res.redirect('/admin/settings')
+})
+app.post('/admin/bot/reset-webhook', ensureAdmin, async (req, res) => {
+  try {
+    if (bot && baseUrl) await bot.telegram.setWebhook(`${baseUrl}/bot/webhook`)
+    res.redirect('/admin/settings')
+  } catch (e) { res.redirect('/admin/settings?test_error=' + encodeURIComponent(e.message || 'Webhook error')) }
+})
+app.post('/admin/bot/delete-webhook', ensureAdmin, async (req, res) => {
+  try {
+    if (bot) await bot.telegram.deleteWebhook()
+    res.redirect('/admin/settings')
+  } catch (e) { res.redirect('/admin/settings?test_error=' + encodeURIComponent(e.message || 'Webhook error')) }
+})
+app.post('/admin/bot/test-message', ensureAdmin, async (req, res) => {
+  try {
+    const id = adminTelegramId || process.env.ADMIN_TELEGRAM_ID || ''
+    if (bot && id) await bot.telegram.sendMessage(id, 'Bot test message: online')
+    res.redirect('/admin/settings')
+  } catch (e) { res.redirect('/admin/settings?test_error=' + encodeURIComponent(e.message || 'Send failed')) }
 })
 
 app.post('/admin/settings/test-eleven', ensureAdmin, async (req, res) => {
