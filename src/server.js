@@ -129,7 +129,7 @@ app.get('/admin/settings', ensureAdmin, async (req, res) => {
   const test_error = req.query.test_error ? req.query.test_error : null
   const import_ok = (req.query.import_ok === '1') ? true : false
   const import_error = req.query.import_error ? req.query.import_error : null
-  res.render('settings', { payment_instructions, contact, welcome_message, welcome_photo, welcome_audio, welcome_document, eleven_api_key, tts_model_id, tts_output_format, tts_style, tts_stability, tts_similarity_boost, tts_use_speaker_boost, pm, pm_qr, bdt_per_usd, nav: 'settings', test_ok, test_error, import_ok, import_error })
+  res.render('settings', { payment_instructions, contact, welcome_message, welcome_photo, welcome_audio, welcome_document, eleven_api_key, tts_model_id, tts_output_format, tts_style, tts_stability, tts_similarity_boost, tts_use_speaker_boost, pm, pm_qr, bdt_per_usd, max_text_length, nav: 'settings', test_ok, test_error, import_ok, import_error })
 })
 app.post('/admin/settings', ensureAdmin, uploadQr.fields([
   { name: 'qr_nagad', maxCount: 1 },
@@ -154,6 +154,7 @@ app.post('/admin/settings', ensureAdmin, uploadQr.fields([
   await db.setSetting('tts_use_speaker_boost', req.body.tts_use_speaker_boost ? '1' : '0')
   await db.setPaymentMethods({ nagad: req.body.nagad || '', btc: req.body.btc || '', ltc: req.body.ltc || '', usdt: req.body.usdt || '', binance_id: req.body.binance_id || '', eth: req.body.eth || '' })
   await db.setSetting('bdt_per_usd', (req.body.bdt_per_usd || '120').trim())
+  await db.setSetting('max_text_length', (req.body.max_text_length || '125').trim())
   const f = req.files || {}
   const prev = await db.getPaymentQRCodes()
   const qr = { ...prev }
