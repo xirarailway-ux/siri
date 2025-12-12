@@ -21,9 +21,17 @@ app.set('view engine', 'ejs')
 app.set('views', path.join(__dirname, 'views'))
 app.use('/public', express.static(path.join(__dirname, '..', 'public')))
 app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')))
+app.use(express.json())
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(session({ secret: 'tts_admin_secret', resave: false, saveUninitialized: false }))
-if (bot && baseUrl) { try { app.use(bot.webhookCallback('/bot/webhook')); bot.telegram.setWebhook(`${baseUrl}/bot/webhook`) } catch (_) {} }
+if (bot && baseUrl) {
+  try {
+    app.get('/bot/webhook', (req, res) => res.status(200).send('OK'))
+    app.post('/bot/webhook', bot.webhookCallback('/bot/webhook'))
+    bot.telegram.setWebhook(`${baseUrl}/bot/webhook`)
+    console.log('Webhook set:', `${baseUrl}/bot/webhook`)
+  } catch (_) {}
+}
 async function ensureAdminHashSync() {
   try {
     let hash = await db.getSetting('admin_hash')
