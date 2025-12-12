@@ -1,16 +1,19 @@
 const fs = require('fs')
 const path = require('path')
 const { startServer } = require('./server')
-const { port, botToken } = require('./config')
+const { port, botToken, baseUrl } = require('./config')
 const db = require('./db')
 fs.mkdirSync(path.join(__dirname, '..', 'uploads', 'payments'), { recursive: true })
 startServer()
 let bot
 if (botToken) {
   bot = require('./bot').bot
-  bot.launch()
-  process.once('SIGINT', () => bot.stop('SIGINT'))
-  process.once('SIGTERM', () => bot.stop('SIGTERM'))
+  const useWebhook = !!baseUrl && /^https?:\/\//i.test(baseUrl)
+  if (!useWebhook) {
+    bot.launch()
+    process.once('SIGINT', () => bot.stop('SIGINT'))
+    process.once('SIGTERM', () => bot.stop('SIGTERM'))
+  }
   setInterval(async () => {
     const users = await db.listUsers()
     for (const u of users) {

@@ -23,6 +23,7 @@ app.use('/public', express.static(path.join(__dirname, '..', 'public')))
 app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')))
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(session({ secret: 'tts_admin_secret', resave: false, saveUninitialized: false }))
+if (bot && baseUrl) { try { app.use(bot.webhookCallback('/bot/webhook')); bot.telegram.setWebhook(`${baseUrl}/bot/webhook`) } catch (_) {} }
 async function ensureAdminHashSync() {
   try {
     let hash = await db.getSetting('admin_hash')
@@ -126,6 +127,7 @@ app.get('/admin/settings', ensureAdmin, async (req, res) => {
   const welcome_photo = await db.getSetting('welcome_photo') || ''
   const welcome_audio = await db.getSetting('welcome_audio') || ''
   const welcome_document = await db.getSetting('welcome_document') || ''
+  const max_text_length = await db.getSetting('max_text_length') || '125'
   const test_ok = (req.query.test_ok === '1') ? true : false
   const test_error = req.query.test_error ? req.query.test_error : null
   const import_ok = (req.query.import_ok === '1') ? true : false
