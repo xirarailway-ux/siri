@@ -267,9 +267,9 @@ app.get('/admin/files', ensureAdmin, async (req, res) => {
       return { name: d.name, is_dir: d.isDirectory(), size: st.size, mtime: st.mtime.toISOString() }
     }).sort((a,b)=> a.is_dir===b.is_dir ? a.name.localeCompare(b.name) : (a.is_dir? -1:1))
     const crumbs = rel.split('/').filter(Boolean)
-    res.render('filemanager', { nav: 'files', entries: list, rel, crumbs })
+    res.render('filemanager', { nav: 'files', entries: list, rel, crumbs, fileContent: null, fileName: '' })
   } catch (e) {
-    res.render('filemanager', { nav: 'files', entries: [], rel: '', crumbs: [], error: e.message || 'Failed' })
+    res.render('filemanager', { nav: 'files', entries: [], rel: '', crumbs: [], error: e.message || 'Failed', fileContent: null, fileName: '' })
   }
 })
 app.get('/admin/files/download', ensureAdmin, async (req, res) => {
