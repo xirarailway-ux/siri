@@ -42,23 +42,49 @@ bot.hears('Contact', async ctx => {
   await ctx.reply(instr, keyboard())
 })
 bot.hears('Help', async ctx => {
+  const kb = keyboard()
   const help = [
-    'How to use:',
-    '1) Models: choose a voice model.',
-    '2) Plans: buy credits. Each generation uses 1 credit.',
-    '3) Generate: send a text message (max 200 characters) to get TTS audio.',
-    '4) Free credit: join our channel https://t.me/Siriupdates and press Verify to get 1 free credit (first time only).',
-    '5) Payments: after selecting a plan and method, pay and send the screenshot here. Admin will approve.',
-    '6) Profile: see your credits, selected voice, and expiry.',
-    'Need help? Contact admin: @TheMysteriousGhost'
-  ].join('\\n')
-  await ctx.reply(help, keyboard())
+    '<b>How to use Hey Siri</b>',
+    '• <b>Models</b>: choose your voice model.',
+    '• <b>Plans</b>: buy credits (1 credit per generation).',
+    '• <b>Generate</b>: send a text message (max 200 chars) to get TTS audio.',
+    '• <b>Free credit</b>: join our channel <a href="https://t.me/Siriupdates">Siriupdates</a> and tap <b>Verify</b> to get 1 free credit (first time only).',
+    '• <b>Payments</b>: after picking a plan and method, pay and send the screenshot here; admin will approve.',
+    '• <b>Profile</b>: see credits, selected voice, expiry and last purchase.',
+    '• <b>Contact</b>: message admin <b>@TheMysteriousGhost</b> for support.'
+  ].join('\n')
+  await ctx.reply(help, { parse_mode: 'HTML', reply_markup: kb.reply_markup })
 })
 bot.hears('Profile', async ctx => {
-  const user = await db.getUserByTgId(String(ctx.from.id))
+  const tgId = String(ctx.from.id)
+  const user = await db.getUserByTgId(tgId)
+  const credits = user ? (user.credits || 0) : 0
   const voice = user && user.selected_voice_id ? user.selected_voice_id : 'Not set'
-  const exp = user && user.credit_expires_at ? new Date(user.credit_expires_at).toLocaleDateString() : 'None'
-  await ctx.reply(`Credits: ${user ? user.credits : 0}\nVoice: ${voice}\nExpiry: ${exp}`, keyboard())
+  let expiry = 'None'
+  let daysLeft = ''
+  if (user && user.credit_expires_at) {
+    const dt = new Date(user.credit_expires_at).getTime()
+    if (!Number.isNaN(dt)) {
+      const diffDays = Math.ceil((dt - Date.now()) / (24*3600*1000))
+      expiry = new Date(dt).toLocaleDateString()
+      daysLeft = diffDays >= 0 ? ` (${diffDays} days left)` : ' (expired)'
+    }
+  }
+  let lastPurchase = 'None'
+  try {
+    const pays = await db.listPaymentsByUserTg(tgId)
+    const ap = pays.find(p => p.status === 'approved')
+    if (ap) lastPurchase = `${ap.plan_name || ''} • ${new Date(ap.created_at).toLocaleDateString()}`
+  } catch (_) {}
+  const kb = keyboard()
+  const html = [
+    '<b>Profile</b>',
+    `<b>Credits:</b> ${credits}`,
+    `<b>Voice:</b> ${voice}`,
+    `<b>Expiry:</b> ${expiry}${daysLeft}`,
+    `<b>Last purchase:</b> ${lastPurchase}`
+  ].join('\n')
+  await ctx.reply(html, { parse_mode: 'HTML', reply_markup: kb.reply_markup })
 })
 bot.hears('Models', async ctx => {
   let vlist = await db.listVoices(true)
