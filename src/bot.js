@@ -45,16 +45,24 @@ bot.hears('Help', async ctx => {
   const kb = keyboard()
   const maxRaw = await db.getSetting('max_text_length') || '125'
   const maxLen = parseInt(String(maxRaw), 10) || 125
-  const help = [
-    '<b>How to use Hey Siri</b>',
-    '• <b>Models</b>: choose your voice model.',
-    '• <b>Plans</b>: buy credits (1 credit per generation).',
-    `• <b>Generate</b>: send a text message (max ${maxLen} chars) to get TTS audio.`,
-    '• <b>Free credit</b>: join our channel <a href="https://t.me/Siriupdates">Siriupdates</a> and tap <b>Verify</b> to get 1 free credit (first time only).',
-    '• <b>Payments</b>: after picking a plan and method, pay and send the screenshot here; admin will approve.',
-    '• <b>Profile</b>: see credits, selected voice, expiry and last purchase.',
-    '• <b>Contact</b>: message admin <b>@TheMysteriousGhost</b> for support.'
-  ].join('\n')
+  let help = await db.getSetting('help_text')
+  if (!help) {
+    help = [
+      '<b>How to use Hey Siri</b>',
+      '• <b>Models</b>: choose your voice model.',
+      '• <b>Plans</b>: buy credits (1 credit per generation).',
+      `• <b>Generate</b>: send a text message (max ${maxLen} chars) to get TTS audio.`,
+      '• <b>Free credit</b>: join our channel <a href="https://t.me/Siriupdates">Siriupdates</a> and tap <b>Verify</b> to get 1 free credit (first time only).',
+      '• <b>Payments</b>: after picking a plan and method, pay and send the screenshot here; admin will approve.',
+      '• <b>Profile</b>: see credits, selected voice, expiry and last purchase.',
+      '• <b>Contact</b>: message admin <b>@TheMysteriousGhost</b> for support.'
+    ].join('\\n')
+  } else {
+    help = help
+      .replaceAll('{{MAX_LEN}}', String(maxLen))
+      .replaceAll('{{CHANNEL}}', 'https://t.me/Siriupdates')
+      .replaceAll('{{ADMIN}}', '@TheMysteriousGhost')
+  }
   await ctx.reply(help, { parse_mode: 'HTML', reply_markup: kb.reply_markup })
 })
 bot.hears('Profile', async ctx => {

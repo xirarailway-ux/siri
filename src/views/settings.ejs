@@ -44,6 +44,10 @@
           <span class="label">Welcome Message</span>
           <textarea class="input" name="welcome_message" rows="3" placeholder="Welcome text"><%= welcome_message %></textarea>
         </div>
+        <div class="field" style="margin-top:12px">
+          <span class="label">Help Text (HTML allowed)</span>
+          <textarea class="input" name="help_text" rows="6" placeholder="Custom help instructions. You can use {{MAX_LEN}}, {{CHANNEL}}, {{ADMIN}} placeholders."><%= help_text || '' %></textarea>
+        </div>
         <div class="form-grid" style="margin-top:12px">
           <div class="field">
             <span class="label">Welcome Photo</span>

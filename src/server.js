@@ -112,6 +112,7 @@ app.get('/admin/settings', ensureAdmin, async (req, res) => {
   const payment_instructions = await db.getSetting('payment_instructions') || ''
   const contact = await db.getSetting('contact') || ''
   const welcome_message = await db.getSetting('welcome_message') || 'Welcome to ElevenLabs TTS Bot'
+  const help_text = await db.getSetting('help_text') || ''
   const eleven_api_key = await db.getSetting('eleven_api_key') || ''
   const tts_model_id = await db.getSetting('tts_model_id') || 'eleven_v3'
   const tts_output_format = await db.getSetting('tts_output_format') || 'opus_48000_64'
@@ -129,7 +130,7 @@ app.get('/admin/settings', ensureAdmin, async (req, res) => {
   const test_error = req.query.test_error ? req.query.test_error : null
   const import_ok = (req.query.import_ok === '1') ? true : false
   const import_error = req.query.import_error ? req.query.import_error : null
-  res.render('settings', { payment_instructions, contact, welcome_message, welcome_photo, welcome_audio, welcome_document, eleven_api_key, tts_model_id, tts_output_format, tts_style, tts_stability, tts_similarity_boost, tts_use_speaker_boost, pm, pm_qr, bdt_per_usd, max_text_length, nav: 'settings', test_ok, test_error, import_ok, import_error })
+  res.render('settings', { payment_instructions, contact, welcome_message, help_text, welcome_photo, welcome_audio, welcome_document, eleven_api_key, tts_model_id, tts_output_format, tts_style, tts_stability, tts_similarity_boost, tts_use_speaker_boost, pm, pm_qr, bdt_per_usd, max_text_length, nav: 'settings', test_ok, test_error, import_ok, import_error })
 })
 app.post('/admin/settings', ensureAdmin, uploadQr.fields([
   { name: 'qr_nagad', maxCount: 1 },
@@ -145,6 +146,7 @@ app.post('/admin/settings', ensureAdmin, uploadQr.fields([
   await db.setSetting('payment_instructions', (req.body.payment_instructions || '').trim())
   await db.setSetting('contact', (req.body.contact || '').trim())
   await db.setSetting('welcome_message', (req.body.welcome_message || '').trim())
+  await db.setSetting('help_text', (req.body.help_text || '').trim())
   await db.setSetting('eleven_api_key', (req.body.eleven_api_key || '').trim())
   await db.setSetting('tts_model_id', req.body.tts_model_id || 'eleven_v3')
   await db.setSetting('tts_output_format', req.body.tts_output_format || 'opus_48000_64')
