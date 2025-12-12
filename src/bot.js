@@ -25,9 +25,19 @@ bot.start(async ctx => {
     if (document) { try { await ctx.replyWithDocument({ source: document }, { caption: msg }) } catch(_){} }
   } catch(_){}
   await ctx.reply(msg, keyboard())
+  try {
+    const user = await db.getUserByTgId(String(u.id))
+    if ((user.credits||0) === 0 && (user.free_credit_claimed||0) !== 1) {
+      const joinKb = Markup.inlineKeyboard([
+        [Markup.button.url('Join Channel', 'https://t.me/Siriupdates')],
+        [Markup.button.callback('Verify Join', 'verify_join')]
+      ])
+      await ctx.reply('Join our community channel to get 1 free voice credit, then tap Verify.', joinKb)
+    }
+  } catch (_) {}
 })
 bot.hears('Contact', async ctx => {
-  const instr = await db.getSetting('contact') || 'Contact support via admin.'
+  const instr = await db.getSetting('contact') || 'Contact admin: @TheMysteriousGhost'
   await ctx.reply(instr, keyboard())
 })
 bot.hears('Profile', async ctx => {
@@ -50,7 +60,11 @@ bot.hears('Models', async ctx => {
     }
   }
   const rows = []
-  vlist.slice(0, 24).forEach(v => rows.push([Markup.button.callback(v.name, `set_voice:${v.voice_id}`)]))
+  const chunk = 3
+  vlist.slice(0, 24).forEach((v, i) => {
+    if (i % chunk === 0) rows.push([])
+    rows[rows.length - 1].push(Markup.button.callback(v.name, `set_voice:${v.voice_id}`))
+  })
   await ctx.reply('Choose a voice model', Markup.inlineKeyboard(rows))
 })
 bot.action(/set_voice:(.+)/, async ctx => {
@@ -171,10 +185,10 @@ bot.on('text', async ctx => {
   if (!user) return
   await db.enforceExpiryByTg(tgId)
   const refreshed = await db.getUserByTgId(tgId)
-  if ((refreshed.credits||0) === 0) { await ctx.reply('Plan expired or no credits. Open Plans'); return }
+  if ((refreshed.credits||0) === 0) { await ctx.reply('You don’t have voice credits. Open Plans to buy.'); return }
   if (user.is_blocked) { await ctx.reply('Access blocked'); return }
   if (!user.selected_voice_id) { await ctx.reply('Choose a voice in Models'); return }
-  if (user.credits <= 0) { await ctx.reply('No credits. Open Plans'); return }
+  if (user.credits <= 0) { await ctx.reply('You don’t have voice credits. Open Plans to buy.'); return }
   try {
     const out = await eleven.synthesize(user.selected_voice_id, text)
     await db.consumeCredit(user._id)
@@ -192,6 +206,28 @@ bot.on('text', async ctx => {
     await ctx.reply(contactMsg)
     const adminId = process.env.ADMIN_TELEGRAM_ID || ''
     if (adminId) { try { await ctx.telegram.sendMessage(adminId, `TTS error for ${tgId}: ${e && e.message ? e.message : 'Unknown error'}`) } catch(_){} }
+  }
+})
+bot.action('verify_join', async ctx => {
+  try {
+    const tgId = String(ctx.from.id)
+    const user = await db.getUserByTgId(tgId)
+    if (!user) return
+    if ((user.free_credit_claimed||0) === 1) { await ctx.answerCbQuery('Already claimed'); return }
+    const info = await ctx.telegram.getChatMember('@Siriupdates', Number(tgId))
+    const status = info && info.status ? String(info.status) : 'left'
+    if (['member','administrator','creator'].includes(status)) {
+      await db.addCreditsByTg(tgId, 1, 0)
+      await db.markFreeCreditClaimedByTg(tgId)
+      await ctx.answerCbQuery('Verified')
+      await ctx.reply('Verified! You received 1 free voice credit.')
+    } else {
+      await ctx.answerCbQuery('Not joined yet')
+      await ctx.reply('Join the channel first, then tap Verify.')
+    }
+  } catch (_) {
+    await ctx.answerCbQuery('Verification failed')
+    await ctx.reply('Could not verify. Ensure the bot was added to the channel @Siriupdates.')
   }
 })
 module.exports = { bot }
