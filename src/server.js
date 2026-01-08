@@ -119,7 +119,7 @@ app.post('/admin/plans/delete', ensureAdmin, async (req, res) => { await db.dele
 app.get('/admin/settings', ensureAdmin, async (req, res) => {
   const payment_instructions = await db.getSetting('payment_instructions') || ''
   const contact = await db.getSetting('contact') || ''
-  const welcome_message = await db.getSetting('welcome_message') || 'Welcome to ElevenLabs TTS Bot'
+  const welcome_message = await db.getSetting('welcome_message') || 'Welcome to Hey Siri TTS Bot'
   const help_text = await db.getSetting('help_text') || ''
   const eleven_api_key = await db.getSetting('eleven_api_key') || ''
   const tts_model_id = await db.getSetting('tts_model_id') || 'eleven_v3'
@@ -215,7 +215,7 @@ app.post('/admin/settings/try-tts', ensureAdmin, async (req, res) => {
     const voices = await db.listVoices(true)
     if (!voices || voices.length === 0) throw new Error('No enabled voices. Sync voices first.')
     const v = voices[0]
-    const fp = await eleven.synthesize(v.voice_id, 'Hello from ElevenLabs test.')
+    const fp = await eleven.synthesize(v.voice_id, 'Hello from TTS test.')
     res.redirect('/admin/settings?test_ok=1&test_audio=' + encodeURIComponent(fp.split('uploads')[1].replace('\\','/').replace(/^\//,'')))
   } catch (e) {
     const msg = (e.response && e.response.data && e.response.data.message) ? e.response.data.message : (e.message || 'TTS test failed')

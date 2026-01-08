@@ -16,7 +16,7 @@ function keyboard() {
 bot.start(async ctx => {
   const u = ctx.from
   await db.upsertUser({ tg_id: String(u.id), username: u.username || '', first_name: u.first_name || '', last_name: u.last_name || '' })
-  const msg = await db.getSetting('welcome_message') || 'Welcome to ElevenLabs TTS Bot'
+  const msg = await db.getSetting('welcome_message') || 'Welcome to Hey Siri TTS Bot'
   try {
     const photo = await db.getSetting('welcome_photo')
     const audio = await db.getSetting('welcome_audio')

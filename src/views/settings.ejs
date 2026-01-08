@@ -28,7 +28,7 @@
       </div>
       <% if (import_ok) { %><div class="pill pill-green">Import successful</div><% } %>
       <% if (import_error) { %><div class="error"><%= import_error %></div><% } %>
-      <% if (test_ok) { %><div class="pill pill-green">ElevenLabs API: OK</div><% } %>
+      <% if (test_ok) { %><div class="pill pill-green">TTS API: OK</div><% } %>
       <% if (test_error) { %><div class="error"><%= test_error %></div><% } %>
       <% if (test_ok && typeof test_audio !== 'undefined' && test_audio) { %>
         <div class="actions" style="margin:8px 0">
@@ -37,7 +37,7 @@
       <% } %>
       <form method="post" action="/admin/settings" enctype="multipart/form-data">
         <div class="field">
-          <span class="label">ElevenLabs API Key</span>
+          <span class="label">API Key</span>
           <input class="input" type="text" name="eleven_api_key" value="<%= eleven_api_key %>" placeholder="xi-api-key" />
         </div>
         <div class="field" style="margin-top:12px">
