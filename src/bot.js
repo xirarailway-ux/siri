@@ -121,7 +121,13 @@ bot.action(/set_voice:(.+)/, async ctx => {
   const voiceId = ctx.match[1]
   await db.setUserVoice(String(ctx.from.id), voiceId)
   await ctx.answerCbQuery('Voice selected')
-  await ctx.editMessageText('Voice selected')
+  try {
+    await ctx.editMessageText('Voice selected')
+  } catch (e) {
+    if (!e.description?.includes('message is not modified')) {
+      console.error('Error editing message:', e)
+    }
+  }
 })
 bot.hears('Plans', async ctx => {
   const plist = await db.listPlans(true)
@@ -215,7 +221,11 @@ bot.action(/approve_payment:(.+)/, async ctx => {
   await db.updatePaymentStatus(id, 'approved', String(ctx.from.id))
   await db.addCredits(p.user_id, plan.credits, plan.valid_days)
   await ctx.answerCbQuery('Approved')
-  await ctx.editMessageCaption({ caption: 'Approved' })
+  try {
+    await ctx.editMessageCaption('Approved')
+  } catch (e) {
+    if (!e.description?.includes('message is not modified')) console.error(e)
+  }
 })
 bot.action(/reject_payment:(.+)/, async ctx => {
   const id = ctx.match[1]
@@ -223,7 +233,11 @@ bot.action(/reject_payment:(.+)/, async ctx => {
   if (!p || p.status !== 'pending') { await ctx.answerCbQuery('Not pending'); return }
   await db.updatePaymentStatus(id, 'rejected', String(ctx.from.id))
   await ctx.answerCbQuery('Rejected')
-  await ctx.editMessageCaption({ caption: 'Rejected' })
+  try {
+    await ctx.editMessageCaption('Rejected')
+  } catch (e) {
+    if (!e.description?.includes('message is not modified')) console.error(e)
+  }
 })
 bot.on('text', async ctx => {
   const text = ctx.message.text.trim()

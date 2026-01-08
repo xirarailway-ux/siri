@@ -47,7 +47,6 @@ async function ensureAdminHashSync() {
     }
   } catch (_) {}
 }
-ensureAdminHashSync()
 app.get('/', (req, res) => res.redirect('/admin'))
 function ensureAdmin(req, res, next) { if (req.session && req.session.admin) return next(); res.redirect('/admin/login') }
 app.get('/admin/login', (req, res) => { res.render('login', { error: null }) })
@@ -313,6 +312,7 @@ function startServer() {
     srv.on('error', err => { if (err.code === 'EADDRINUSE') { try { srv.close() } catch (_) {} } reject(err) })
   })
   ;(async () => {
+    await ensureAdminHashSync()
     let p = port
     for (let i = 0; i < 5; i++) {
       try {
