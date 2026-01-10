@@ -261,7 +261,15 @@ bot.on('text', async ctx => {
     await db.recordGeneration(user._id, user.selected_voice_id, text.length, '')
     await db.touchUserGenerationById(user._id)
     if (out.filename.endsWith('.ogg')) {
-      await ctx.replyWithVoice({ source: out.buffer, filename: out.filename })
+      try {
+        await ctx.replyWithVoice({ source: out.buffer, filename: out.filename })
+      } catch (e) {
+        if (e.description && e.description.includes('VOICE_MESSAGES_FORBIDDEN')) {
+          await ctx.replyWithAudio({ source: out.buffer, filename: out.filename })
+        } else {
+          throw e
+        }
+      }
     } else {
       await ctx.replyWithAudio({ source: out.buffer, filename: out.filename })
     }
