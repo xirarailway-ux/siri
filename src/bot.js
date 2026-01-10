@@ -268,6 +268,7 @@ bot.on('text', async ctx => {
     const after = await db.getUserById(user._id)
     if ((after.credits||0) === 0) { await ctx.reply('You used all credits. Plan expired.') }
   } catch (e) {
+    console.error('TTS Error:', e)
     const contactMsg = await db.getSetting('contact') || 'Contact support via admin.'
     await ctx.reply(contactMsg)
     const adminId = process.env.ADMIN_TELEGRAM_ID || ''
@@ -294,6 +295,28 @@ bot.action('verify_join', async ctx => {
   } catch (_) {
     await ctx.answerCbQuery('Verification failed')
     await ctx.reply('Could not verify. Ensure the bot was added to the channel @Siriupdates.')
+  }
+})
+bot.on(['audio', 'voice'], async ctx => {
+  try {
+    const fileId = ctx.message.audio ? ctx.message.audio.file_id : ctx.message.voice.file_id
+    await ctx.replyWithVoice(fileId)
+  } catch (e) {
+    console.error('Audio/Voice error:', e)
+    await ctx.reply('Could not convert to voice message.')
+  }
+})
+bot.on('video', async ctx => {
+  try {
+    const vid = ctx.message.video
+    if (vid.file_size > 15 * 1024 * 1024) {
+      await ctx.reply('Video is too large. Max 15MB.')
+      return
+    }
+    await ctx.replyWithVideoNote(vid.file_id)
+  } catch (e) {
+    console.error('Video note error:', e)
+    await ctx.reply('Could not convert to rounded video. Ensure the video is compatible (square format preferred).')
   }
 })
 module.exports = { bot }

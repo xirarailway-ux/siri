@@ -3,7 +3,19 @@ const { v4: uuidv4 } = require('uuid')
 const { elevenApiKey } = require('./config')
 const db = require('./db')
 async function apiKey() { const k = await db.getSetting('eleven_api_key'); return k || elevenApiKey }
-function extractMsg(e) { try { if (e.response && e.response.data) { const d = e.response.data; return typeof d === 'string' ? d : (d.message || JSON.stringify(d)) } } catch(_) {} return e.message || 'Request failed' }
+function extractMsg(e) {
+  try {
+    if (e.response && e.response.data) {
+      let d = e.response.data
+      if (Buffer.isBuffer(d)) {
+        try { d = JSON.parse(d.toString('utf8')) } catch (_) { d = d.toString('utf8') }
+      }
+      if (typeof d === 'string') return d
+      return d.detail?.message || d.message || JSON.stringify(d)
+    }
+  } catch (_) {}
+  return e.message || 'Request failed'
+}
 function normalizeFormat(fmt) { if (!fmt) return 'opus_48000_64'; const f = String(fmt).toLowerCase(); if (f === 'ogg_64' || f === 'ogg') return 'opus_48000_64'; return fmt }
 async function modelConfig() {
   const model_id = (await db.getSetting('tts_model_id')) || 'eleven_v3'

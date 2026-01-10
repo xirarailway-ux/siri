@@ -216,7 +216,10 @@ app.post('/admin/settings/try-tts', ensureAdmin, async (req, res) => {
     if (!voices || voices.length === 0) throw new Error('No enabled voices. Sync voices first.')
     const v = voices[0]
     const fp = await eleven.synthesize(v.voice_id, 'Hello from TTS test.')
-    res.redirect('/admin/settings?test_ok=1&test_audio=' + encodeURIComponent(fp.split('uploads')[1].replace('\\','/').replace(/^\//,'')))
+    const filename = fp.filename
+    const savePath = path.join(__dirname, '..', 'uploads', filename)
+    fs.writeFileSync(savePath, fp.buffer)
+    res.redirect('/admin/settings?test_ok=1&test_audio=' + encodeURIComponent(filename))
   } catch (e) {
     const msg = (e.response && e.response.data && e.response.data.message) ? e.response.data.message : (e.message || 'TTS test failed')
     res.redirect('/admin/settings?test_error=' + encodeURIComponent(msg))
