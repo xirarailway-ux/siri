@@ -97,7 +97,7 @@ ${plan.valid_days ? `<b>Validity:</b> ${plan.valid_days} days` : ''}
 
 Thank you for your purchase!
 `.trim()
-      try { await bot.telegram.sendMessage(u.tg_id, msg, { parse_mode: 'HTML' }) } catch (_) {}
+      try { await bot.telegram.sendMessage(u.tg_id, msg, { parse_mode: 'HTML' }) } catch (e) { console.error('Approval Notify Error:', e) }
     }
   }
   res.redirect('/admin/payments')

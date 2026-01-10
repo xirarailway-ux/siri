@@ -289,8 +289,25 @@ bot.action(/approve_payment:(.+)/, async ctx => {
   await ctx.answerCbQuery('Approved')
   try {
     await ctx.editMessageCaption('Approved')
+    
+    // Notify user
+    const u = await db.getUserById(p.user_id)
+    if (u && u.tg_id) {
+      const msg = `
+✅ <b>Payment Approved!</b>
+
+<b>Plan Activated:</b> ${plan.name}
+<b>Credits Added:</b> ${plan.credits}
+<b>Payment Method:</b> ${p.method ? p.method.toUpperCase() : 'Unknown'}
+<b>Total Credits:</b> ${(u.credits || 0) + plan.credits}
+${plan.valid_days ? `<b>Validity:</b> ${plan.valid_days} days` : ''}
+
+Thank you for your purchase!
+`.trim()
+      await ctx.telegram.sendMessage(u.tg_id, msg, { parse_mode: 'HTML' })
+    }
   } catch (e) {
-    if (!e.description?.includes('message is not modified')) console.error(e)
+    console.error('Bot Approval Error:', e)
   }
 })
 bot.action(/reject_payment:(.+)/, async ctx => {
