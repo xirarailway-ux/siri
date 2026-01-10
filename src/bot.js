@@ -1,9 +1,52 @@
 const { Telegraf, Markup } = require('telegraf')
 const path = require('path')
 const fs = require('fs')
+const os = require('os')
+const axios = require('axios')
+const ffmpeg = require('fluent-ffmpeg')
 const { botToken, adminTelegramId } = require('./config')
 const db = require('./db')
 const eleven = require('./elevenlabs')
+
+async function downloadFile(url, dest) {
+  const writer = fs.createWriteStream(dest)
+  const response = await axios({ url, method: 'GET', responseType: 'stream' })
+  response.data.pipe(writer)
+  return new Promise((resolve, reject) => {
+    writer.on('finish', resolve)
+    writer.on('error', reject)
+  })
+}
+
+async function convertAudioToVoice(inputPath, outputPath) {
+  return new Promise((resolve, reject) => {
+    ffmpeg(inputPath)
+      .toFormat('ogg')
+      .audioCodec('libopus')
+      .on('end', resolve)
+      .on('error', reject)
+      .save(outputPath)
+  })
+}
+
+async function convertVideoToNote(inputPath, outputPath) {
+  return new Promise((resolve, reject) => {
+    ffmpeg(inputPath)
+      .size('384x384')
+      .videoCodec('libx264')
+      .audioCodec('aac')
+      .format('mp4')
+      .outputOptions([
+        '-vf', 'crop=min(iw\\,ih):min(iw\\,ih),scale=384:384',
+        '-movflags', '+faststart',
+        '-t', '60'
+      ])
+      .on('end', resolve)
+      .on('error', reject)
+      .save(outputPath)
+  })
+}
+
 if (!botToken) throw new Error('BOT_TOKEN missing')
 const bot = new Telegraf(botToken)
 function keyboard() {
@@ -306,25 +349,55 @@ bot.action('verify_join', async ctx => {
   }
 })
 bot.on(['audio', 'voice'], async ctx => {
+  const msg = await ctx.reply('Processing audio...')
+  const tempDir = os.tmpdir()
+  const inputId = ctx.message.audio ? ctx.message.audio.file_id : ctx.message.voice.file_id
+  const ext = ctx.message.audio ? '.mp3' : '.ogg'
+  const inputPath = path.join(tempDir, `input_${inputId}${ext}`)
+  const outputPath = path.join(tempDir, `output_${inputId}.ogg`)
+  
   try {
-    const fileId = ctx.message.audio ? ctx.message.audio.file_id : ctx.message.voice.file_id
-    await ctx.replyWithVoice(fileId)
+    const link = await ctx.telegram.getFileLink(inputId)
+    await downloadFile(link.href, inputPath)
+    
+    await convertAudioToVoice(inputPath, outputPath)
+    
+    await ctx.replyWithVoice({ source: outputPath })
+    await ctx.deleteMessage(msg.message_id).catch(()=>{})
   } catch (e) {
     console.error('Audio/Voice error:', e)
     await ctx.reply('Could not convert to voice message.')
+  } finally {
+    try { if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath) } catch(_) {}
+    try { if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath) } catch(_) {}
   }
 })
+
 bot.on('video', async ctx => {
+  const vid = ctx.message.video
+  if (vid.file_size > 15 * 1024 * 1024) {
+    await ctx.reply('Video is too large. Max 15MB.')
+    return
+  }
+  const msg = await ctx.reply('Processing video note...')
+  const tempDir = os.tmpdir()
+  const inputPath = path.join(tempDir, `input_${vid.file_id}.mp4`)
+  const outputPath = path.join(tempDir, `output_${vid.file_id}.mp4`)
+
   try {
-    const vid = ctx.message.video
-    if (vid.file_size > 15 * 1024 * 1024) {
-      await ctx.reply('Video is too large. Max 15MB.')
-      return
-    }
-    await ctx.replyWithVideoNote(vid.file_id)
+    const link = await ctx.telegram.getFileLink(vid.file_id)
+    await downloadFile(link.href, inputPath)
+    
+    await convertVideoToNote(inputPath, outputPath)
+    
+    await ctx.replyWithVideoNote({ source: outputPath })
+    await ctx.deleteMessage(msg.message_id).catch(()=>{})
   } catch (e) {
     console.error('Video note error:', e)
-    await ctx.reply('Could not convert to rounded video. Ensure the video is compatible (square format preferred).')
+    await ctx.reply('Could not convert to rounded video. Ensure video format is supported.')
+  } finally {
+    try { if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath) } catch(_) {}
+    try { if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath) } catch(_) {}
   }
 })
 module.exports = { bot }
