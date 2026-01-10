@@ -86,7 +86,38 @@ Use the menu below or send a command to get started. If you need help at any tim
     if (audio) {
       // Send as voice message (prioritize audio/voice)
       try {
-        await ctx.replyWithVoice({ source: audio }, extra)
+        // Attempt to convert to OGG Opus for "real waves"
+        let sentVoice = false
+        try {
+          const tempDir = os.tmpdir()
+          const uniqueId = Date.now() + Math.random().toString(36).substring(7)
+          const inputPath = path.join(tempDir, `welcome_in_${uniqueId}`) 
+          const outputPath = path.join(tempDir, `welcome_out_${uniqueId}.ogg`)
+          let hasFile = false
+
+          if (audio.startsWith('http') || audio.startsWith('https')) {
+            await downloadFile(audio, inputPath)
+            hasFile = true
+          } else if (fs.existsSync(audio)) {
+            fs.copyFileSync(audio, inputPath)
+            hasFile = true
+          }
+
+          if (hasFile) {
+            await convertAudioToVoice(inputPath, outputPath)
+            await ctx.replyWithVoice({ source: outputPath }, extra)
+            sentVoice = true
+            // Cleanup
+            try { if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath) } catch(_) {}
+            try { if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath) } catch(_) {}
+          }
+        } catch (convErr) {
+          console.error('Welcome voice conversion failed:', convErr)
+        }
+
+        if (!sentVoice) {
+          await ctx.replyWithVoice({ source: audio }, extra)
+        }
         sent = true
       } catch (e) {
         console.error('Error sending voice:', e)
