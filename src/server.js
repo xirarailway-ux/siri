@@ -86,8 +86,18 @@ app.post('/admin/payments/approve', ensureAdmin, async (req, res) => {
     const u = await db.getUserById(p.user_id)
     if (bot && u && u.tg_id) {
       const refreshed = await db.getUserById(p.user_id)
-      const msg = `Payment approved for ${plan.name}. Credits added: ${plan.credits}. Total credits: ${refreshed.credits}`
-      try { await bot.telegram.sendMessage(u.tg_id, msg) } catch (_) {}
+      const msg = `
+✅ <b>Payment Approved!</b>
+
+<b>Plan Activated:</b> ${plan.name}
+<b>Credits Added:</b> ${plan.credits}
+<b>Payment Method:</b> ${p.method ? p.method.toUpperCase() : 'Unknown'}
+<b>Total Credits:</b> ${refreshed.credits}
+${plan.valid_days ? `<b>Validity:</b> ${plan.valid_days} days` : ''}
+
+Thank you for your purchase!
+`.trim()
+      try { await bot.telegram.sendMessage(u.tg_id, msg, { parse_mode: 'HTML' }) } catch (_) {}
     }
   }
   res.redirect('/admin/payments')
