@@ -65,7 +65,8 @@ function keyboard() {
     ['Help']
   ]).resize().persistent()
 }
-bot.start(async ctx => {
+
+async function sendWelcome(ctx) {
   const u = ctx.from
   await db.upsertUser({ tg_id: String(u.id), username: u.username || '', first_name: u.first_name || '', last_name: u.last_name || '' })
   const msg = await db.getSetting('welcome_message') || 'Welcome to Hey Siri TTS Bot'
@@ -88,7 +89,20 @@ bot.start(async ctx => {
       await ctx.reply('Join our community channel to get 1 free voice credit, then tap Verify.', joinKb)
     }
   } catch (_) {}
+}
+
+bot.use(async (ctx, next) => {
+  if (ctx.from) {
+    const user = await db.getUserByTgId(String(ctx.from.id))
+    if (!user) {
+      await sendWelcome(ctx)
+      return
+    }
+  }
+  await next()
 })
+
+bot.start(sendWelcome)
 bot.hears('Contact', async ctx => {
   const instr = await db.getSetting('contact') || 'Contact admin: @TheMysteriousGhost'
   await ctx.reply(instr, keyboard())
