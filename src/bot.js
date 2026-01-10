@@ -49,6 +49,15 @@ async function convertVideoToNote(inputPath, outputPath) {
 
 if (!botToken) throw new Error('BOT_TOKEN missing')
 const bot = new Telegraf(botToken)
+
+bot.use(async (ctx, next) => {
+  if (ctx.message) {
+    const type = ctx.message.video ? 'video' : (ctx.message.document ? 'document' : (ctx.message.audio ? 'audio' : (ctx.message.voice ? 'voice' : 'text')))
+    console.log(`Received message type: ${type} from ${ctx.from.id}`)
+  }
+  await next()
+})
+
 function keyboard() {
   return Markup.keyboard([
     ['Plans', 'Models'],
@@ -373,19 +382,18 @@ bot.on(['audio', 'voice'], async ctx => {
   }
 })
 
-bot.on('video', async ctx => {
-  const vid = ctx.message.video
-  if (vid.file_size > 15 * 1024 * 1024) {
+async function processVideoMessage(ctx, file) {
+  if (file.file_size > 15 * 1024 * 1024) {
     await ctx.reply('Video is too large. Max 15MB.')
     return
   }
   const msg = await ctx.reply('Processing video note...')
   const tempDir = os.tmpdir()
-  const inputPath = path.join(tempDir, `input_${vid.file_id}.mp4`)
-  const outputPath = path.join(tempDir, `output_${vid.file_id}.mp4`)
+  const inputPath = path.join(tempDir, `input_${file.file_id}.mp4`)
+  const outputPath = path.join(tempDir, `output_${file.file_id}.mp4`)
 
   try {
-    const link = await ctx.telegram.getFileLink(vid.file_id)
+    const link = await ctx.telegram.getFileLink(file.file_id)
     await downloadFile(link.href, inputPath)
     
     await convertVideoToNote(inputPath, outputPath)
@@ -399,5 +407,17 @@ bot.on('video', async ctx => {
     try { if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath) } catch(_) {}
     try { if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath) } catch(_) {}
   }
+}
+
+bot.on('video', async ctx => {
+  await processVideoMessage(ctx, ctx.message.video)
 })
+
+bot.on('document', async ctx => {
+  const doc = ctx.message.document
+  if (doc.mime_type && doc.mime_type.startsWith('video/')) {
+    await processVideoMessage(ctx, doc)
+  }
+})
+
 module.exports = { bot }
