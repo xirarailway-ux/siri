@@ -277,7 +277,7 @@ bot.hears('Plans', async ctx => {
     await ctx.reply('No plans available. Please try later.', keyboard())
     return
   }
-  const rows = plist.map(p => [Markup.button.callback(`${p.name} (${p.credits} credits) - ${p.price}`, `buy_plan:${p._id}`)])
+  const rows = plist.map(p => [Markup.button.callback(`${p.name} (${p.credits} credits) - $${p.price}`, `buy_plan:${p._id}`)])
   await ctx.reply('Choose a plan', Markup.inlineKeyboard(rows))
 })
 bot.action(/buy_plan:(.+)/, async ctx => {
