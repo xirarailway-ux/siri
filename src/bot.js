@@ -69,16 +69,61 @@ function keyboard() {
 async function sendWelcome(ctx) {
   const u = ctx.from
   await db.upsertUser({ tg_id: String(u.id), username: u.username || '', first_name: u.first_name || '', last_name: u.last_name || '' })
-  const msg = await db.getSetting('welcome_message') || 'Welcome to Hey Siri TTS Bot'
+  
+  const msg = `👋 Welcome! 
+I’m glad you’re here. 
+Use the menu below or send a command to get started. If you need help at any time, just type /help  😊`
+
   try {
     const photo = await db.getSetting('welcome_photo')
     const audio = await db.getSetting('welcome_audio')
     const document = await db.getSetting('welcome_document')
-    if (photo) { try { await ctx.replyWithPhoto({ source: photo }, { caption: msg }) } catch(_){} }
-    if (audio) { try { await ctx.replyWithAudio({ source: audio }, { caption: msg }) } catch(_){} }
-    if (document) { try { await ctx.replyWithDocument({ source: document }, { caption: msg }) } catch(_){} }
-  } catch(_){}
-  await ctx.reply(msg, keyboard())
+    
+    const kb = keyboard()
+    const extra = { caption: msg, ...kb }
+    let sent = false
+
+    if (audio) {
+      // Send as voice message (prioritize audio/voice)
+      try {
+        await ctx.replyWithVoice({ source: audio }, extra)
+        sent = true
+      } catch (e) {
+        console.error('Error sending voice:', e)
+        // If voice fails (e.g. format), try audio
+        try {
+          await ctx.replyWithAudio({ source: audio }, extra)
+          sent = true
+        } catch (_) {}
+      }
+    }
+    
+    if (!sent && photo) {
+      try {
+        await ctx.replyWithPhoto({ source: photo }, extra)
+        sent = true
+      } catch (_) {}
+    }
+
+    if (!sent && document) {
+      try {
+        await ctx.replyWithDocument({ source: document }, extra)
+        sent = true
+      } catch (_) {}
+    }
+    
+    // Fallback: just text
+    if (!sent) {
+      await ctx.reply(msg, kb)
+    }
+    
+  } catch(e){
+    console.error('Welcome error:', e)
+    // Final fallback
+    await ctx.reply(msg, keyboard())
+  }
+  
+  // Check for free credits
   try {
     const user = await db.getUserByTgId(String(u.id))
     if ((user.credits||0) === 0 && (user.free_credit_claimed||0) !== 1) {
